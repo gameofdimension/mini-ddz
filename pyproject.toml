@@ -5,9 +5,7 @@ description = "Mini DDZ - A Dou Dizhu (Chinese Poker) PvE Demo"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
-authors = [
-    {name = "RLCard Team"},
-]
+authors = []
 keywords = ["douzero", "doudizhu", "game", "ai"]
 classifiers = [
     "Development Status :: 4 - Beta",
