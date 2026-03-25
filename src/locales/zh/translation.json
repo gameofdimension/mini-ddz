@@ -12,6 +12,9 @@
     "actions": "操作",
     "no_replays": "暂无回放",
     "failed_to_load_replays": "加载回放失败",
+    "delete": "删除",
+    "replay_deleted": "回放已删除",
+    "failed_to_delete_replay": "删除回放失败",
 
     "doudizhu": {
         "ai_hand_faceup": "显示AI手牌",

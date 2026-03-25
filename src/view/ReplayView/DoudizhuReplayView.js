@@ -63,6 +63,81 @@ class DoudizhuReplayView extends React.Component {
         };
     }
 
+    componentDidMount() {
+        // Check if replay_id is provided in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const replayId = urlParams.get('replay_id');
+        if (replayId) {
+            this.loadReplay(replayId);
+        }
+    }
+
+    loadReplay(replayId) {
+        // Load existing replay from backend
+        const requestUrl = `${douzeroDemoUrl}/replay/${replayId}`;
+
+        this.setState({ fullScreenLoading: true });
+        axios
+            .get(requestUrl)
+            .then((res) => {
+                res = res.data;
+                
+                if (res.status !== 0) {
+                    throw new Error(res.message || 'Failed to load replay');
+                }
+                
+                const replayData = res.data;
+
+                // init replay info
+                this.moveHistory = replayData.moveHistory;
+                // Pre-process move history
+                for (const historyItem of this.moveHistory) {
+                    if (historyItem.info && !Array.isArray(historyItem.info)) {
+                        if ('probs' in historyItem.info) {
+                            historyItem.info.probs = Object.entries(historyItem.info.probs).sort(
+                                (a, b) => Number(b[1]) - Number(a[1]),
+                            );
+                        } else if ('values' in historyItem.info) {
+                            historyItem.info.values = Object.entries(historyItem.info.values).sort(
+                                (a, b) => Number(b[1]) - Number(a[1]),
+                            );
+                        }
+                    }
+                }
+                console.log('pre-processed move history', this.moveHistory);
+
+                let gameInfo = deepCopy(this.initGameState);
+                gameInfo.gameStatus = 'playing';
+                gameInfo.playerInfo = replayData.playerInfo;
+                gameInfo.hands = replayData.initHands.map((element) => {
+                    return this.cardStr2Arr(element);
+                });
+                // the first player should be landlord
+                gameInfo.currentPlayer = replayData.playerInfo.find((element) => {
+                    return element.role === 'landlord';
+                }).index;
+                if (this.gameStateHistory.length === 0) {
+                    this.gameStateHistory.push(gameInfo);
+                }
+                this.setState({ gameInfo: gameInfo, fullScreenLoading: false }, () => {
+                    if (this.gameStateTimeout) {
+                        window.clearTimeout(this.gameStateTimeout);
+                        this.gameStateTimeout = null;
+                    }
+                    // loop to update game state
+                    this.gameStateTimer();
+                });
+            })
+            .catch(() => {
+                this.setState({ fullScreenLoading: false });
+                Message({
+                    message: 'Error in loading replay data',
+                    type: 'error',
+                    showClose: true,
+                });
+            });
+    }
+
     cardStr2Arr(cardStr) {
         return cardStr === 'pass' || cardStr === '' ? 'pass' : cardStr.split(' ');
     }
@@ -184,6 +259,13 @@ class DoudizhuReplayView extends React.Component {
     }
 
     startReplay() {
+        // Check if replay_id is in URL, if so reload the page to clear it
+        const urlParams = new URLSearchParams(window.location.search);
+        const replayId = urlParams.get('replay_id');
+        if (replayId) {
+            window.location.href = '/replay/doudizhu';
+            return;
+        }
         // Generate a new replay from DouZero backend
         const requestUrl = `${douzeroDemoUrl}/generate_replay`;
 

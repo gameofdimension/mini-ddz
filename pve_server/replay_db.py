@@ -134,11 +134,10 @@ def list_replays(limit: int = 100) -> List[Dict[str, Any]]:
         
         replays = []
         for row in rows:
-            # Convert ISO timestamp to Unix timestamp for compatibility
-            created_dt = datetime.fromisoformat(row[1].replace('Z', '+00:00'))
+            # Return ISO format string for proper timezone handling
             replays.append({
                 'replay_id': row[0],
-                'created': created_dt.timestamp()
+                'created': row[1]
             })
         
         return replays
