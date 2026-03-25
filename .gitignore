@@ -34,3 +34,6 @@ package-lock.json
 
 douzero_pretrained
 dmc_pretrained
+
+# runtime generated files
+pve_server/replays/
