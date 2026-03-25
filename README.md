@@ -47,22 +47,16 @@ cd mini-ddz
 npm install
 ```
 
-3. 安装 Python 依赖（使用 uv）：
+3. 安装 Python 依赖：
 ```bash
 uv sync
-```
-
-或使用 pip：
-```bash
-pip install -e .
 ```
 
 ## 运行项目
 
 1. 启动 PvE 服务器（Flask 后端）：
 ```bash
-cd pve_server
-python run_douzero.py
+uv run python pve_server/run_douzero.py
 ```
 
 后端将运行在 [http://127.0.0.1:5000/](http://127.0.0.1:5000/)。
