@@ -5,6 +5,13 @@
     "cancel": "取消",
     "turn": "回合",
     "reset": "重置",
+    "replay": "回放",
+    "replay_list": "回放列表",
+    "refresh": "刷新",
+    "created_at": "创建时间",
+    "actions": "操作",
+    "no_replays": "暂无回放",
+    "failed_to_load_replays": "加载回放失败",
 
     "doudizhu": {
         "ai_hand_faceup": "显示AI手牌",
