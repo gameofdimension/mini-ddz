@@ -300,7 +300,7 @@ class DoudizhuGameBoard extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    componentDidUpdate(prevProps) {
         if (
             this.props.runNewTurn &&
             prevProps.turn !== this.props.turn &&

@@ -63,6 +63,21 @@ let legalActions = { turn: -1, actions: [] };
 let hintIdx = -1;
 let gameEndDialogTitle = '';
 let syncGameStatus = localStorage.getItem('LOCALE') ? 'ready' : 'localeSelection';
+let moveHistory = []; // For replay recording
+
+// Save replay to backend
+const saveReplayToBackend = async (replayData) => {
+    try {
+        const response = await axios.post(`${douzeroDemoUrl}/save_replay`, replayData);
+        if (response.data.status === 0) {
+            console.log('Replay saved successfully:', response.data.replay_id);
+        } else {
+            console.error('Failed to save replay:', response.data.message);
+        }
+    } catch (error) {
+        console.error('Error saving replay:', error);
+    }
+};
 
 function PvEDoudizhuDemoView() {
     const { t } = useTranslation();
@@ -207,6 +222,14 @@ function PvEDoudizhuDemoView() {
         gameHistory.push(newHistoryRecord);
         if (isDoudizhuBomb(newHistoryRecord)) bombNum++;
 
+        // Record move for replay
+        const moveRecord = {
+            playerIdx: gameState.currentPlayer,
+            move: newLatestAction === 'pass' ? 'pass' : newLatestAction.join(' '),
+            info: {}
+        };
+        moveHistory.push(moveRecord);
+
         newGameState.latestAction[gameState.currentPlayer] = newLatestAction;
         newGameState.hands[gameState.currentPlayer] = newHand;
         newGameState.currentPlayer = (newGameState.currentPlayer + 1) % 3;
@@ -317,6 +340,19 @@ function PvEDoudizhuDemoView() {
                 ]);
 
                 setIsGameEndDialogOpen(true);
+
+                // Save replay to backend
+                const replayData = {
+                    playerInfo: playerInfo.map(p => ({
+                        id: p.id,
+                        index: p.index,
+                        role: p.role,
+                        agentInfo: p.agentInfo || { name: p.index === mainPlayerId ? 'Player' : 'DouZero' }
+                    })),
+                    initHands: initHands.map(hand => hand.join(' ')),
+                    moveHistory: moveHistory
+                };
+                saveReplayToBackend(replayData);
             }, 2000);
         } else {
             setConsiderationTime(initConsiderationTime);
@@ -586,6 +622,7 @@ function PvEDoudizhuDemoView() {
 
         gameStateTimeout = null;
         gameHistory = [];
+        moveHistory = [];
         bombNum = 0;
         lastMoveLandlord = [];
         lastMoveLandlordDown = [];

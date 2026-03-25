@@ -494,6 +494,32 @@ def generate_replay():
         return jsonify({'status': -1, 'message': 'failed to generate replay'})
 
 
+@app.route('/save_replay', methods=['POST'])
+def save_replay_endpoint():
+    """Save a replay from user game"""
+    try:
+        replay_data = request.get_json()
+        if not replay_data:
+            return jsonify({'status': 1, 'message': 'no data provided'})
+
+        replay_id = str(uuid.uuid4())[:8]
+        replay_data['replay_id'] = replay_id
+
+        # Save to database
+        if save_replay(replay_id, replay_data):
+            return jsonify({
+                'status': 0,
+                'message': 'success',
+                'replay_id': replay_id
+            })
+        else:
+            return jsonify({'status': -1, 'message': 'failed to save replay'})
+    except:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': -1, 'message': 'failed to save replay'})
+
+
 @app.route('/replay/<replay_id>', methods=['GET'])
 def get_replay_by_id(replay_id):
     """Get a replay by ID"""
