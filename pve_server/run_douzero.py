@@ -96,26 +96,43 @@ def _cards_to_suit_format(cards):
     return result
 
 
-def _action_to_suit_format(action, player_hand_cards):
-    """Convert action to suit format, matching the suit assignment in _cards_to_suit_format"""
+def _assign_card_suits(cards):
+    """Assign suit to each card based on its position among cards of the same rank.
+    Returns a list of (card_value, suit) tuples.
+    """
+    card_counts = {}
+    result = []
+    for card in cards:
+        card_char = EnvCard2RealCard[card]
+        if card_char not in card_counts:
+            card_counts[card_char] = 0
+        suit = Card2Suit[card_char][card_counts[card_char]]
+        result.append((card, suit))
+        card_counts[card_char] += 1
+    return result
+
+
+def _action_to_suit_format(action, player_hand_with_suits):
+    """Convert action to suit format using pre-assigned suits.
+    
+    Args:
+        action: List of card values (e.g., [3, 3] for a pair of 3s)
+        player_hand_with_suits: List of (card_value, suit) tuples representing current hand
+    
+    Returns:
+        Space-separated string of card suits (e.g., 'S3 H3')
+    """
     if action == [] or action == 'pass':
         return 'pass'
     
     result = []
-    temp_hand = player_hand_cards.copy()
-    card_counts = {}
+    temp_hand = player_hand_with_suits.copy()
     
     for card in action:
-        card_char = EnvCard2RealCard[card]
-        if card_char not in card_counts:
-            card_counts[card_char] = 0
-        
-        # Find matching card in hand and track suit index
-        for i, hand_card in enumerate(temp_hand):
-            if EnvCard2RealCard[hand_card] == card_char:
-                # Use the tracked count to get the correct suit, consistent with _cards_to_suit_format
-                result.append(Card2Suit[card_char][card_counts[card_char]])
-                card_counts[card_char] += 1
+        # Find the first matching card in hand
+        for i, (hand_card, suit) in enumerate(temp_hand):
+            if hand_card == card:
+                result.append(suit)
                 temp_hand.pop(i)
                 break
     return ' '.join(result)
@@ -207,10 +224,12 @@ def generate_replay_data():
     """Generate a replay by running a game with DouZero AI"""
     # Deal cards
     cards = _deal_cards()
-    hands = {
-        0: cards[0].copy(),
-        1: cards[1].copy(),
-        2: cards[2].copy()
+    
+    # Assign suits to each card and maintain (value, suit) pairs throughout the game
+    hands_with_suits = {
+        0: _assign_card_suits(cards[0]),
+        1: _assign_card_suits(cards[1]),
+        2: _assign_card_suits(cards[2])
     }
     
     # Initialize replay data structure
@@ -221,15 +240,22 @@ def generate_replay_data():
             {'id': 2, 'index': 2, 'role': 'peasant', 'agentInfo': {'name': 'DouZero-Peasant'}}
         ],
         'initHands': [
-            ' '.join(_cards_to_suit_format(cards[0])),
-            ' '.join(_cards_to_suit_format(cards[1])),
-            ' '.join(_cards_to_suit_format(cards[2]))
+            ' '.join([suit for (_, suit) in hands_with_suits[0]]),
+            ' '.join([suit for (_, suit) in hands_with_suits[1]]),
+            ' '.join([suit for (_, suit) in hands_with_suits[2]])
         ],
         'moveHistory': []
     }
     
-    # Track current hands for each player
-    current_hands = {
+    # Track current hands for each player (with suits)
+    current_hands_with_suits = {
+        0: hands_with_suits[0].copy(),
+        1: hands_with_suits[1].copy(),
+        2: hands_with_suits[2].copy()
+    }
+    
+    # Also maintain plain card values for AI interaction
+    current_hands_plain = {
         0: cards[0].copy(),
         1: cards[1].copy(),
         2: cards[2].copy()
@@ -249,23 +275,23 @@ def generate_replay_data():
     
     while turn < max_turns:
         # Check if current player has won
-        if len(current_hands[current_player]) == 0:
+        if len(current_hands_plain[current_player]) == 0:
             break
         
-        # Build info set for current player
+        # Build info set for current player (using plain card values for AI)
         info_set = InfoSet()
         info_set.player_position = current_player
-        info_set.player_hand_cards = current_hands[current_player].copy()
+        info_set.player_hand_cards = current_hands_plain[current_player].copy()
         
         # Calculate other hands
         other_hands = []
         for i in range(3):
             if i != current_player:
-                other_hands.extend(current_hands[i])
+                other_hands.extend(current_hands_plain[i])
         info_set.other_hand_cards = sorted(other_hands, reverse=True)
         
         # Calculate cards left
-        info_set.num_cards_left = [len(current_hands[0]), len(current_hands[1]), len(current_hands[2])]
+        info_set.num_cards_left = [len(current_hands_plain[0]), len(current_hands_plain[1]), len(current_hands_plain[2])]
         
         # Three landlord cards
         info_set.three_landlord_cards = cards['three_landlord_cards'].copy()
@@ -296,7 +322,7 @@ def generate_replay_data():
         
         # Get legal actions
         info_set.legal_actions = _get_legal_card_play_actions(
-            current_hands[current_player].copy(),
+            current_hands_plain[current_player].copy(),
             rival_move
         )
         
@@ -306,10 +332,10 @@ def generate_replay_data():
         # Select best action
         action = actions[0] if actions else []
         
-        # Record move
+        # Record move (using hands with suits for correct suit assignment)
         move_record = {
             'playerIdx': current_player,
-            'move': _action_to_suit_format(action, current_hands[current_player].copy()),
+            'move': _action_to_suit_format(action, current_hands_with_suits[current_player]),
             'info': {
                 'values': {''.join([EnvCard2RealCard[a] for a in actions[i]]): float(confidences[i]) 
                           for i in range(len(actions))}
@@ -319,10 +345,16 @@ def generate_replay_data():
         
         # Update game state
         if action != []:  # Not pass
-            # Remove cards from hand
+            # Remove cards from both plain and suited hands
             for card in action:
-                if card in current_hands[current_player]:
-                    current_hands[current_player].remove(card)
+                # Remove from plain hands
+                if card in current_hands_plain[current_player]:
+                    current_hands_plain[current_player].remove(card)
+                # Remove from suited hands (find by card value)
+                for i, (c, s) in enumerate(current_hands_with_suits[current_player]):
+                    if c == card:
+                        current_hands_with_suits[current_player].pop(i)
+                        break
             
             # Update last move
             last_move = action.copy()
@@ -340,7 +372,7 @@ def generate_replay_data():
         card_play_action_seq[current_player].append(action)
         
         # Check win condition
-        if len(current_hands[current_player]) == 0:
+        if len(current_hands_plain[current_player]) == 0:
             break
         
         # Next player
