@@ -12,6 +12,9 @@
     "actions": "Actions",
     "no_replays": "No replays available",
     "failed_to_load_replays": "Failed to load replays",
+    "delete": "Delete",
+    "replay_deleted": "Replay deleted",
+    "failed_to_delete_replay": "Failed to delete replay",
 
     "doudizhu": {
         "ai_hand_faceup": "AI Hand Face-Up",

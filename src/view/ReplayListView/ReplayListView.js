@@ -12,6 +12,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import RefreshIcon from '@material-ui/icons/Refresh';
+import DeleteIcon from '@material-ui/icons/Delete';
 import { Layout, Loading, Message } from 'element-react';
 import { douzeroDemoUrl } from '../../utils/config';
 import '../../assets/gameview.scss';
@@ -47,8 +48,26 @@ function ReplayListView() {
         history.push(`/replay/doudizhu?replay_id=${replayId}`);
     };
 
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp * 1000);
+    const handleDeleteReplay = async (replayId) => {
+        try {
+            const response = await axios.delete(`${douzeroDemoUrl}/delete_replay/${replayId}`);
+            if (response.data.status === 0) {
+                Message.success(t('replay_deleted'));
+                fetchReplays();
+            } else {
+                console.error('Delete failed with status:', response.data);
+                Message.error(t('failed_to_delete_replay') + ': ' + (response.data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error deleting replay:', error);
+            Message.error(t('failed_to_delete_replay') + ': ' + (error.message || 'Network error'));
+        }
+    };
+
+    const formatDate = (dateString) => {
+        // dateString is in 'YYYY-MM-DD HH:MM:SS' format (UTC)
+        // Append 'Z' to treat it as UTC, then convert to local time
+        const date = new Date(dateString.replace(' ', 'T') + 'Z');
         return date.toLocaleString();
     };
 
@@ -104,8 +123,18 @@ function ReplayListView() {
                                                         size="small"
                                                         startIcon={<PlayArrowIcon />}
                                                         onClick={() => handlePlayReplay(replay.replay_id)}
+                                                        style={{ marginRight: '8px' }}
                                                     >
                                                         {t('play')}
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="secondary"
+                                                        size="small"
+                                                        startIcon={<DeleteIcon />}
+                                                        onClick={() => handleDeleteReplay(replay.replay_id)}
+                                                    >
+                                                        {t('delete')}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>

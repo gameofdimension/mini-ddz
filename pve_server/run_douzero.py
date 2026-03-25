@@ -13,7 +13,7 @@ CORS(app)
 from utils.move_generator import MovesGener
 from utils import move_detector as md, move_selector as ms
 from deep import DeepAgent
-from replay_db import save_replay, get_replay, list_replays
+from replay_db import save_replay, get_replay, list_replays, delete_replay
 
 EnvCard2RealCard = {3: '3', 4: '4', 5: '5', 6: '6', 7: '7',
                     8: '8', 9: '9', 10: 'T', 11: 'J', 12: 'Q',
@@ -554,6 +554,23 @@ def list_all_replays():
         import traceback
         traceback.print_exc()
         return jsonify({'status': -1, 'message': 'failed to list replays'})
+
+
+@app.route('/delete_replay/<replay_id>', methods=['DELETE'])
+def delete_replay_by_id(replay_id):
+    """Delete a replay by ID"""
+    try:
+        if delete_replay(replay_id):
+            return jsonify({
+                'status': 0,
+                'message': 'success'
+            })
+        else:
+            return jsonify({'status': -1, 'message': 'failed to delete replay'})
+    except:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': -1, 'message': 'failed to delete replay'})
 
 
 class InfoSet(object):
