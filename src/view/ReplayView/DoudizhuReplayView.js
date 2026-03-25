@@ -73,10 +73,18 @@ class DoudizhuReplayView extends React.Component {
     }
 
     loadReplay(replayId) {
+        // Clear old state to prevent mixing with new replay
+        this.gameStateHistory = [];
+        this.moveHistory = [];
+        if (this.gameStateTimeout) {
+            window.clearTimeout(this.gameStateTimeout);
+            this.gameStateTimeout = null;
+        }
+
         // Load existing replay from backend
         const requestUrl = `${douzeroDemoUrl}/replay/${replayId}`;
 
-        this.setState({ fullScreenLoading: true });
+        this.setState({ fullScreenLoading: true, gameSpeed: 0 });
         axios
             .get(requestUrl)
             .then((res) => {
@@ -116,9 +124,8 @@ class DoudizhuReplayView extends React.Component {
                 gameInfo.currentPlayer = replayData.playerInfo.find((element) => {
                     return element.role === 'landlord';
                 }).index;
-                if (this.gameStateHistory.length === 0) {
-                    this.gameStateHistory.push(gameInfo);
-                }
+                // Always push initial state to history
+                this.gameStateHistory.push(gameInfo);
                 this.setState({ gameInfo: gameInfo, fullScreenLoading: false }, () => {
                     if (this.gameStateTimeout) {
                         window.clearTimeout(this.gameStateTimeout);
@@ -266,11 +273,20 @@ class DoudizhuReplayView extends React.Component {
             window.location.href = '/replay/doudizhu';
             return;
         }
+
+        // Clear old state to prevent mixing with new replay
+        this.gameStateHistory = [];
+        this.moveHistory = [];
+        if (this.gameStateTimeout) {
+            window.clearTimeout(this.gameStateTimeout);
+            this.gameStateTimeout = null;
+        }
+
         // Generate a new replay from DouZero backend
         const requestUrl = `${douzeroDemoUrl}/generate_replay`;
 
         // start full screen loading
-        this.setState({ fullScreenLoading: true });
+        this.setState({ fullScreenLoading: true, gameSpeed: 0 });
         axios
             .get(requestUrl)
             .then((res) => {
@@ -310,10 +326,8 @@ class DoudizhuReplayView extends React.Component {
                 gameInfo.currentPlayer = replayData.playerInfo.find((element) => {
                     return element.role === 'landlord';
                 }).index;
-                if (this.gameStateHistory.length === 0) {
-                    // fix replay bug
-                    this.gameStateHistory.push(gameInfo);
-                }
+                // Always push initial state to history
+                this.gameStateHistory.push(gameInfo);
                 this.setState({ gameInfo: gameInfo, fullScreenLoading: false }, () => {
                     if (this.gameStateTimeout) {
                         window.clearTimeout(this.gameStateTimeout);
@@ -559,6 +573,10 @@ class DoudizhuReplayView extends React.Component {
     }
 
     go2PrevGameState() {
+        // Boundary check: cannot go back before initial state
+        if (this.state.gameInfo.turn <= 0) {
+            return;
+        }
         let gameInfo = deepCopy(this.gameStateHistory[this.state.gameInfo.turn - 1]);
         gameInfo.gameStatus = 'paused';
         gameInfo.toggleFade = '';
@@ -566,6 +584,10 @@ class DoudizhuReplayView extends React.Component {
     }
 
     go2NextGameState() {
+        // Boundary check: cannot go beyond the last move
+        if (this.state.gameInfo.turn >= this.moveHistory.length) {
+            return;
+        }
         let gameInfo = this.generateNewState();
         if (gameInfo.gameStatus === 'over') return;
         gameInfo.gameStatus = 'paused';
