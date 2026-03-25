@@ -16,7 +16,6 @@ import SkipNextIcon from '@material-ui/icons/SkipNext';
 import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import axios from 'axios';
 import { Layout, Loading, Message } from 'element-react';
-import qs from 'query-string';
 import React from 'react';
 import '../../assets/gameview.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
