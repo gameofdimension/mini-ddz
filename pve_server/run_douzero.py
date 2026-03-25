@@ -97,18 +97,25 @@ def _cards_to_suit_format(cards):
 
 
 def _action_to_suit_format(action, player_hand_cards):
-    """Convert action to suit format"""
+    """Convert action to suit format, matching the suit assignment in _cards_to_suit_format"""
     if action == [] or action == 'pass':
         return 'pass'
     
     result = []
     temp_hand = player_hand_cards.copy()
+    card_counts = {}
+    
     for card in action:
         card_char = EnvCard2RealCard[card]
-        # Find matching card in hand
+        if card_char not in card_counts:
+            card_counts[card_char] = 0
+        
+        # Find matching card in hand and track suit index
         for i, hand_card in enumerate(temp_hand):
             if EnvCard2RealCard[hand_card] == card_char:
-                result.append(Card2Suit[card_char][0])
+                # Use the tracked count to get the correct suit, consistent with _cards_to_suit_format
+                result.append(Card2Suit[card_char][card_counts[card_char]])
+                card_counts[card_char] += 1
                 temp_hand.pop(i)
                 break
     return ' '.join(result)
