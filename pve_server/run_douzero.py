@@ -13,6 +13,7 @@ CORS(app)
 from utils.move_generator import MovesGener
 from utils import move_detector as md, move_selector as ms
 from deep import DeepAgent
+from replay_db import save_replay, get_replay, list_replays
 
 EnvCard2RealCard = {3: '3', 4: '4', 5: '5', 6: '6', 7: '7',
                     8: '8', 9: '9', 10: 'T', 11: 'J', 12: 'Q',
@@ -46,9 +47,8 @@ players = []
 for position in ['landlord', 'landlord_down', 'landlord_up']:
     players.append(DeepAgent(position, pretrained_dir, use_onnx=True))
 
-# Replay storage
-REPLAYS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'replays')
-os.makedirs(REPLAYS_DIR, exist_ok=True)
+# Replay storage (SQLite database)
+# Database is initialized in replay_db module
 
 
 def _init_deck():
@@ -472,23 +472,22 @@ def legal():
 
 @app.route('/generate_replay', methods=['GET'])
 def generate_replay():
-    """Generate a new replay by running a game with DouZero AI"""
+    """Generate a new replay by running a game with AI"""
     try:
         replay_data = generate_replay_data()
         replay_id = str(uuid.uuid4())[:8]
         replay_data['replay_id'] = replay_id
         
-        # Save to file
-        replay_path = os.path.join(REPLAYS_DIR, f'{replay_id}.json')
-        with open(replay_path, 'w') as f:
-            json.dump(replay_data, f)
-        
-        return jsonify({
-            'status': 0,
-            'message': 'success',
-            'replay_id': replay_id,
-            'data': replay_data
-        })
+        # Save to database
+        if save_replay(replay_id, replay_data):
+            return jsonify({
+                'status': 0,
+                'message': 'success',
+                'replay_id': replay_id,
+                'data': replay_data
+            })
+        else:
+            return jsonify({'status': -1, 'message': 'failed to save replay'})
     except:
         import traceback
         traceback.print_exc()
@@ -496,15 +495,12 @@ def generate_replay():
 
 
 @app.route('/replay/<replay_id>', methods=['GET'])
-def get_replay(replay_id):
+def get_replay_by_id(replay_id):
     """Get a replay by ID"""
     try:
-        replay_path = os.path.join(REPLAYS_DIR, f'{replay_id}.json')
-        if not os.path.exists(replay_path):
+        replay_data = get_replay(replay_id)
+        if replay_data is None:
             return jsonify({'status': -1, 'message': 'replay not found'})
-        
-        with open(replay_path, 'r') as f:
-            replay_data = json.load(f)
         
         return jsonify({
             'status': 0,
@@ -518,23 +514,10 @@ def get_replay(replay_id):
 
 
 @app.route('/list_replays', methods=['GET'])
-def list_replays():
+def list_all_replays():
     """List all available replays"""
     try:
-        replays = []
-        for filename in os.listdir(REPLAYS_DIR):
-            if filename.endswith('.json'):
-                replay_id = filename[:-5]
-                replay_path = os.path.join(REPLAYS_DIR, filename)
-                with open(replay_path, 'r') as f:
-                    data = json.load(f)
-                    replays.append({
-                        'replay_id': replay_id,
-                        'created': os.path.getctime(replay_path)
-                    })
-        
-        # Sort by creation time (newest first)
-        replays.sort(key=lambda x: x['created'], reverse=True)
+        replays = list_replays(limit=100)
         
         return jsonify({
             'status': 0,

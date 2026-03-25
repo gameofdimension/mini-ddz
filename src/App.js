@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { PvEDoudizhuDemoView } from './view/PvEView';
 import { DoudizhuReplayView } from './view/ReplayView';
+import { ReplayListView } from './view/ReplayListView';
 
 const navbarSubtitleMap = {
     '/': 'DouDizhu',
@@ -16,6 +17,7 @@ function App() {
             <Navbar subtitleMap={navbarSubtitleMap} />
             <div style={{ marginTop: '75px' }}>
                 <Route exact path="/" component={PvEDoudizhuDemoView} />
+                <Route exact path="/replays" component={ReplayListView} />
                 <Route path="/replay/doudizhu" component={DoudizhuReplayView} />
                 <Route path="/pve/doudizhu-demo" component={PvEDoudizhuDemoView} />
             </div>

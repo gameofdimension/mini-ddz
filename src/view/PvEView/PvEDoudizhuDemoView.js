@@ -1,4 +1,4 @@
-import { MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -11,11 +11,10 @@ import Paper from '@material-ui/core/Paper';
 import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
-import TranslateIcon from '@material-ui/icons/Translate';
 import axios from 'axios';
 import { Layout, Message } from 'element-react';
 import qs from 'query-string';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
@@ -66,7 +65,7 @@ let gameEndDialogTitle = '';
 let syncGameStatus = localStorage.getItem('LOCALE') ? 'ready' : 'localeSelection';
 
 function PvEDoudizhuDemoView() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const [apiPlayDelay, setApiPlayDelay] = useState(3000);
     const [isGameEndDialogOpen, setIsGameEndDialogOpen] = useState(false);
     const [considerationTime, setConsiderationTime] = useState(initConsiderationTime);
@@ -84,7 +83,6 @@ function PvEDoudizhuDemoView() {
     const [predictionRes, setPredictionRes] = useState({ prediction: [], hands: [] });
     const [hideRivalHand, setHideRivalHand] = useState(true);
     const [hidePredictionArea, setHidePredictionArea] = useState(true);
-    const [locale, setLocale] = useState(localStorage.getItem('LOCALE') || 'en');
     const [statisticRows, setStatisticRows] = useState([]);
 
     const cardArr2DouzeroFormat = (cards) => {
@@ -871,12 +869,6 @@ function PvEDoudizhuDemoView() {
         return value;
     };
 
-    const handleLocaleChange = useCallback((newLocale) => {
-        i18n.changeLanguage(newLocale);
-        setLocale(newLocale);
-        localStorage.setItem('LOCALE', newLocale);
-    }, []);
-
     return (
         <div>
             <Dialog
@@ -951,10 +943,6 @@ function PvEDoudizhuDemoView() {
                                     toggleFade={toggleFade}
                                     gameStatus={gameStatus}
                                     handleMainPlayerAct={handleMainPlayerAct}
-                                    handleLocaleChange={(newLocale) => {
-                                        handleLocaleChange(newLocale);
-                                        setGameStatus('ready');
-                                    }}
                                 />
                             </Paper>
                         </div>
@@ -1073,31 +1061,7 @@ function PvEDoudizhuDemoView() {
                                     </div>
                                 </div>
                             </Layout.Col>
-                            <Layout.Col span="1" style={{ height: '100%', width: '1px' }}>
-                                <Divider orientation="vertical" />
-                            </Layout.Col>
-                            <Layout.Col span="3" style={{ height: '100%' }}>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        height: '100%',
-                                        paddingLeft: '10px',
-                                    }}
-                                >
-                                    <TranslateIcon style={{ width: '1.2rem', height: '1.2rem' }} />
-                                    <Select
-                                        id="language-select"
-                                        style={{ width: '100%', textAlign: 'center', marginLeft: '7px' }}
-                                        value={locale}
-                                        onChange={(e) => handleLocaleChange(e.target.value)}
-                                    >
-                                        <MenuItem value={'zh'}>中文</MenuItem>
-                                        <MenuItem value={'en'}>English</MenuItem>
-                                    </Select>
-                                </div>
-                            </Layout.Col>
+
                         </Layout.Row>
                     </Paper>
                 </div>

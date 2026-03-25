@@ -1,28 +1,61 @@
-import React from "react";
-import { Link, useLocation } from 'react-router-dom';
-import logo_white from "../assets/images/logo_white.png";
-import GitHubIcon from "@material-ui/icons/GitHub";
+import React, { useState, useEffect } from "react";
 import AppBar from "@material-ui/core/AppBar";
+import ReplayIcon from "@material-ui/icons/Replay";
+import TranslateIcon from "@material-ui/icons/Translate";
+import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
-function Navbar({subtitleMap}) {
-    let location = useLocation();
-    console.log(location.pathname, subtitleMap);
-    const subtitle = subtitleMap[location.pathname];
+function Navbar() {
+    const history = useHistory();
+    const { i18n } = useTranslation();
+    const [locale, setLocale] = useState(localStorage.getItem('LOCALE') || 'en');
+
+    useEffect(() => {
+        // Sync with localStorage on mount
+        const savedLocale = localStorage.getItem('LOCALE') || 'en';
+        if (savedLocale !== locale) {
+            setLocale(savedLocale);
+        }
+    }, []);
+
+    const handleLocaleChange = (newLocale) => {
+        setLocale(newLocale);
+        localStorage.setItem('LOCALE', newLocale);
+        i18n.changeLanguage(newLocale);
+    };
 
     return (
         <AppBar position="fixed" className={"header-bar-wrapper"}>
             <div className={"header-bar"}>
-                <Link to="/pve/doudizhu-demo"><img src={logo_white} alt={"Logo"} height="65px" /></Link>
-                <div className={"title unselectable"}><div className={"title-text"}>Showdown<span className={"subtitle"}>{subtitle ? '/ ' + subtitle : ''}</span></div></div>
+                <div className={"title unselectable"}>
+                    <div className={"title-text"}>Mini DDZ</div>
+                </div>
                 <div className={"stretch"} />
-                <div className={"github-info"} onClick={()=>{window.location.href = 'https://github.com/datamllab/rlcard'}}>
-                    <div className={"github-icon"}><GitHubIcon /></div>
-                    <div className={"github-text"}>Github</div>
+                <div className="replay-info" onClick={() => history.push('/replays')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+                    <div className="replay-icon" style={{ marginRight: '5px' }}><ReplayIcon /></div>
+                    <div className="replay-text">回放</div>
+                </div>
+                <div className="locale-info" style={{ display: 'flex', alignItems: 'center' }}>
+                    <TranslateIcon style={{ width: '1.2rem', height: '1.2rem', marginRight: '5px' }} />
+                    <select
+                        value={locale}
+                        onChange={(e) => handleLocaleChange(e.target.value)}
+                        style={{ 
+                            background: 'transparent', 
+                            border: '1px solid rgba(255,255,255,0.5)', 
+                            color: 'white',
+                            padding: '2px 5px',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        <option value="zh" style={{ color: 'black' }}>中文</option>
+                        <option value="en" style={{ color: 'black' }}>English</option>
+                    </select>
                 </div>
             </div>
         </AppBar>
-        )
-
+    );
 }
 
 export default Navbar;
