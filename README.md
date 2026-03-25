@@ -1,14 +1,11 @@
 # Mini DDZ
 
-这是一个基于 [DouZero](https://github.com/kwai/DouZero) 的斗地主（Dou Dizhu）PvE（人机对战）演示项目。前端使用 [React](https://reactjs.org/) 开发，后端基于 [Flask](https://flask.palletsprojects.com/)。
-
-*   DouZero 项目: [https://github.com/kwai/DouZero](https://github.com/kwai/DouZero)
-*   在线演示: [https://www.douzero.org/](https://www.douzero.org/)
+这是一个斗地主（Dou Dizhu）PvE（人机对战）演示项目。前端使用 [React](https://reactjs.org/) 开发，后端基于 [Flask](https://flask.palletsprojects.com/)。
 
 ## 功能特性
 
 ### 1. PvE 模式（人机对战）
-与 DouZero AI 进行斗地主对战：
+与 AI 进行斗地主对战：
 - 选择角色：地主、地主上家或地主下家
 - 实时 AI 预测和胜率估计
 - 可调节的游戏速度
@@ -17,7 +14,7 @@
 
 ### 2. 回放模式
 观看 AI 对战回放：
-- 自动生成 DouZero AI 对战回放
+- 自动生成 AI 对战回放
 - 支持步进播放和速度控制
 - 查看 AI 预测动作和预期胜率
 - 暂停、恢复和浏览游戏历史
@@ -101,7 +98,7 @@ mini-ddz/
 │   │   ├── move_selector.py    # 动作筛选器
 │   │   └── utils.py            # 通用工具
 │   ├── pretrained/        # 预训练模型
-│   │   └── douzero_pretrained/ # DouZero 预训练模型
+│   │   └── douzero_pretrained/ # 预训练模型
 │   └── replays/           # 回放数据存储
 ├── docs/                  # 文档
 │   ├── README.md          # 文档索引
@@ -136,19 +133,6 @@ Flask 后端提供以下接口：
 ## 演示截图
 
 ![斗地主回放](docs/imgs/doudizhu-replay.png)
-
-## 引用 DouZero
-
-如果在研究中使用本项目，请引用 DouZero 论文：
-
-```bibtex
-@article{zha2021douzero,
-  title={DouZero: Mastering DouDizhu with Self-Play Deep Reinforcement Learning},
-  author={Zha, Daochen and Xie, Jingru and Ma, Wenye and Zhang, Sheng and Lian, Xiangru and Hu, Xia and Liu, Ji},
-  journal={arXiv preprint arXiv:2103.00239},
-  year={2021}
-}
-```
 
 ## 联系我们
 
