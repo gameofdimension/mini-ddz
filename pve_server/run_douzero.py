@@ -42,9 +42,7 @@ Card2Suit = {
     'D': ['RJ'],
 }
 
-# Get the directory where this file is located
-_pve_server_dir = os.path.dirname(os.path.abspath(__file__))
-pretrained_dir = os.path.join(_pve_server_dir, 'pretrained', 'douzero_pretrained')
+pretrained_dir = 'pretrained/douzero_pretrained'
 players = []
 for position in ['landlord', 'landlord_down', 'landlord_up']:
     players.append(DeepAgent(position, pretrained_dir, use_onnx=True))
@@ -630,7 +628,7 @@ class InfoSet(object):
         self.bomb_num = None
 
 
-def main():
+if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='DouZero backend')
     parser.add_argument('--debug', action='store_true')
@@ -638,7 +636,3 @@ def main():
     parser.add_argument('--port', type=int, default=5000, help='Port to bind to (default: 5000)')
     args = parser.parse_args()
     app.run(host=args.host, port=args.port, debug=args.debug)
-
-
-if __name__ == '__main__':
-    main()

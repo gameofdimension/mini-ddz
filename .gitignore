@@ -37,8 +37,3 @@ dmc_pretrained
 
 # runtime generated files
 pve_server/replays/
-
-pytest.ini
-.coverage
-
-uv.lock
