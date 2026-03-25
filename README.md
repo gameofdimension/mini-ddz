@@ -119,19 +119,9 @@ Flask 后端提供以下接口：
 
 ## 技术栈
 
-- **前端**: React 16.x, Material-UI, i18next, Socket.io-client
+- **前端**: React 16.x, Material-UI, i18next, axios
 - **后端**: Flask, Flask-CORS
 - **AI 推理**: PyTorch, ONNX Runtime
 - **包管理**: NPM (前端), uv (Python)
 
-## 演示截图
 
-![斗地主回放](docs/imgs/doudizhu-replay.png)
-
-## 联系我们
-
-如有问题或反馈，欢迎在 GitHub 上提交 Issue。
-
-## 致谢
-
-感谢 JJ World Network Technology Co., LTD 的慷慨支持，[Chieh-An Tsai](https://anntsai.myportfolio.com/) 的用户界面设计，以及 [Lei Pan](https://github.com/lpan18) 在可视化方面的帮助。
