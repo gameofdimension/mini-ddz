@@ -52,6 +52,9 @@ npm install
 uv sync
 ```
 
+4. 下载预训练模型。[参考](https://github.com/datamllab/rlcard-showdown/tree/master?tab=readme-ov-file#run-rlcard-showdown)
+
+
 ## 运行项目
 
 1. 启动 PvE 服务器（Flask 后端）：
