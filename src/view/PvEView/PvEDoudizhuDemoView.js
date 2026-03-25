@@ -14,7 +14,7 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import axios from 'axios';
 import { Layout, Message } from 'element-react';
 import qs from 'query-string';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
@@ -361,7 +361,7 @@ function PvEDoudizhuDemoView() {
         }
     };
 
-    const requestApiPlay = async () => {
+    const requestApiPlay = useCallback(async () => {
         // gather information for api request
         const player_position = playerInfo[gameState.currentPlayer].douzeroPlayerPosition;
         const player_hand_cards = cardArr2DouzeroFormat(gameState.hands[gameState.currentPlayer].slice().reverse());
@@ -495,7 +495,7 @@ function PvEDoudizhuDemoView() {
                 showClose: true,
             });
         }
-    };
+    }, [bombNum, douzeroDemoUrl, gameHistory, gameState, lastMoveLandlord, lastMoveLandlordDown, lastMoveLandlordUp, playedCardsLandlord, playedCardsLandlordDown, playedCardsLandlordUp, playerInfo, proceedNextTurn, setPredictionRes, t, threeLandlordCards]);
 
     const toggleHidePredictionArea = () => {
         setHideRivalHand(!hideRivalHand);
@@ -560,7 +560,7 @@ function PvEDoudizhuDemoView() {
         syncGameStatus = 'playing';
     };
 
-    const gameStateTimer = () => {
+    const gameStateTimer = useCallback(() => {
         gameStateTimeout = setTimeout(() => {
             let currentConsiderationTime = considerationTime;
             if (currentConsiderationTime > 0) {
@@ -573,7 +573,7 @@ function PvEDoudizhuDemoView() {
                 // todo
             }
         }, considerationTimeDeduction);
-    };
+    }, [considerationTime, setConsiderationTime]);
 
     const handleResetStatistics = () => {
         localStorage.removeItem('GAME_STATISTICS');
@@ -651,7 +651,7 @@ function PvEDoudizhuDemoView() {
         setIsGameEndDialogOpen(false);
     };
 
-    const startGame = async () => {
+    const startGame = useCallback(async () => {
         // start game
         setGameStatus('playing');
         syncGameStatus = 'playing';
@@ -679,11 +679,11 @@ function PvEDoudizhuDemoView() {
 
         setGameState(newGameState);
         gameStateTimer();
-    };
+    }, [gameState, playerInfo, initHands, mainPlayerId, douzeroDemoUrl, setGameStatus, setIsHintDisabled, setGameState, gameStateTimer]);
 
     useEffect(() => {
         if (syncGameStatus === 'playing') gameStateTimer();
-    }, [considerationTime]);
+    }, [considerationTime, gameStateTimer]);
 
     useEffect(() => {
         if (gameState.currentPlayer !== null && syncGameStatus === 'playing') {
@@ -694,11 +694,11 @@ function PvEDoudizhuDemoView() {
                 setPredictionRes({ prediction: [], hands: [] });
             }
         }
-    }, [gameState.currentPlayer]);
+    }, [gameState.currentPlayer, requestApiPlay]);
 
     useEffect(() => {
         if (gameStatus === 'playing') startGame();
-    }, [gameStatus]);
+    }, [gameStatus, startGame]);
 
     const handleMainPlayerAct = (type) => {
         switch (type) {
