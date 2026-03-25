@@ -25,11 +25,14 @@ dependencies = [
     "numpy",
     "onnx",
     "onnxruntime",
+    "pytest>=8.4.2",
+    "pytest-cov",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-cov",
     "black",
     "ruff",
 ]
