@@ -1,63 +1,73 @@
-# User Guide
+# 用户指南
 
-## PvE Mode (Human vs AI)
+## PvE 模式（人机对战）
 
-### Starting a Game
-1. Open the application at [http://127.0.0.1:3000/](http://127.0.0.1:3000/)
-2. Select your preferred language (English or Chinese) if prompted
-3. Choose your role:
-   - **Landlord**: Plays first with 20 cards
-   - **Landlord Up**: Peasant position, plays after landlord
-   - **Landlord Down**: Peasant position, plays before landlord
-4. Click "Start Game" to begin
+### 开始游戏
 
-### Playing the Game
-- **Your Turn**: Select cards from your hand by clicking on them
-- **Play**: Click the "Play" button to play selected cards
-- **Pass**: Click "Pass" if you cannot or choose not to play
-- **Hint**: Click "Hint" to see suggested moves
-- **Deselect**: Click "Deselect" to clear your selection
+1. 打开应用：[http://127.0.0.1:3000/](http://127.0.0.1:3000/)
+2. 选择语言（如有提示）：支持中文和英文
+3. 选择角色：
+   - **地主**：先手，20 张牌
+   - **地主上家**：农民位置，在地主之后出牌
+   - **地主下家**：农民位置，在地主之前出牌
+4. 点击"开始游戏"
 
-### Game Settings
-- **Game Speed**: Adjust the AI thinking time (0s to 30s)
-- **Show/Hide AI Cards**: Toggle to reveal/hide opponent cards and AI predictions
+### 游戏操作
 
-### Statistics
-Your game statistics are automatically saved to browser local storage:
-- Win rate by role (Landlord, Landlord Up, Landlord Down)
-- Total games played and won
-- Click "Reset" in the game end dialog to clear statistics
+- **选牌**：点击手牌选择要出的牌
+- **出牌**：点击"出牌"按钮打出选中的牌
+- **不出**：点击"不出"跳过本轮
+- **提示**：点击"提示"查看建议出牌
+- **取消选择**：点击"取消选择"清除已选牌
 
-## Replay Mode
+### 游戏设置
 
-### Watching a Replay
-1. Navigate to [http://127.0.0.1:3000/replay/doudizhu](http://127.0.0.1:3000/replay/doudizhu)
-2. Click "Start" to generate and watch a new AI vs AI replay
+- **游戏速度**：调整 AI 思考时间（0 秒到 30 秒）
+- **显示/隐藏 AI 手牌**：切换是否显示对手手牌和 AI 预测
 
-### Replay Controls
-- **Play/Pause**: Control the replay playback
-- **Restart**: Start a new replay
-- **Previous/Next**: Navigate between moves when paused
-- **Speed**: Adjust playback speed (0.125x to 8x)
+### 游戏统计
 
-### Understanding the Display
-- **Left Panel**: Game board showing all players' cards and actions
-- **Right Panel**: AI predictions showing:
-  - Current player's role
-  - Top 3 predicted moves with expected win rates
-  - Three landlord cards
+游戏统计会自动保存到浏览器本地存储：
+- 各角色胜率（地主、地主上家、地主下家）
+- 总游戏场次和胜场
+- 点击游戏结束对话框中的"重置"清除统计
 
-## Troubleshooting
+## 回放模式
 
-### Cannot connect to backend
-- Make sure the Flask server is running on port 5000
-- Check that `pve_server/run_douzero.py` is started
-- Verify the backend URL in `src/utils/config.js`
+### 观看回放
 
-### Models not found
-- Pre-trained models should be in `pve_server/pretrained/douzero_pretrained/`
-- The repository includes the necessary model files
+1. 访问 [http://127.0.0.1:3000/replay/doudizhu](http://127.0.0.1:3000/replay/doudizhu)
+2. 点击"开始"生成并观看新的 AI 对战回放
 
-### Frontend not loading
-- Ensure Node.js dependencies are installed (`npm install`)
-- Check that no other service is using port 3000
+### 回放控制
+
+- **播放/暂停**：控制回放播放
+- **重新开始**：生成新回放
+- **上一步/下一步**：暂停时逐帧浏览
+- **速度**：调整播放速度（0.125x 到 8x）
+
+### 界面说明
+
+- **左侧面板**：游戏面板，显示所有玩家的牌和动作
+- **右侧面板**：AI 预测信息：
+  - 当前玩家角色
+  - 前 3 个预测动作及预期胜率
+  - 三张地主牌
+
+## 故障排除
+
+### 无法连接后端
+
+- 确保 Flask 服务器在 5000 端口运行
+- 检查 `pve_server/run_douzero.py` 是否已启动
+- 验证 `src/utils/config.js` 中的后端 URL 配置
+
+### 找不到模型
+
+- 预训练模型应位于 `pve_server/pretrained/douzero_pretrained/`
+- 仓库已包含必要的模型文件
+
+### 前端无法加载
+
+- 确保 Node.js 依赖已安装（`npm install`）
+- 检查是否有其他服务占用了 3000 端口

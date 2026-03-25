@@ -1,127 +1,145 @@
 # Mini DDZ
 
-This is a GUI visualization tool for the [DouZero](https://github.com/kwai/DouZero) project. RLCard-Showdown provides a PvE (Player vs Environment) module where you can play against the DouZero AI interactively, and a replay module where you can watch AI vs AI games. The frontend is developed with [React](https://reactjs.org/). The backend is based on [Flask](https://flask.palletsprojects.com/).
+这是一个基于 [DouZero](https://github.com/kwai/DouZero) 的斗地主（Dou Dizhu）PvE（人机对战）演示项目。前端使用 [React](https://reactjs.org/) 开发，后端基于 [Flask](https://flask.palletsprojects.com/)。
 
-*   DouZero Project: [https://github.com/kwai/DouZero](https://github.com/kwai/DouZero)
-*   Online Demo: [https://www.douzero.org/](https://www.douzero.org/)
+*   DouZero 项目: [https://github.com/kwai/DouZero](https://github.com/kwai/DouZero)
+*   在线演示: [https://www.douzero.org/](https://www.douzero.org/)
 
-## Installation
+## 功能特性
 
-RLCard-Showdown has separated frontend and backend.
+### 1. PvE 模式（人机对战）
+与 DouZero AI 进行斗地主对战：
+- 选择角色：地主、地主上家或地主下家
+- 实时 AI 预测和胜率估计
+- 可调节的游戏速度
+- 游戏统计追踪
+- 支持中英文切换
 
-### Prerequisite
+### 2. 回放模式
+观看 AI 对战回放：
+- 自动生成 DouZero AI 对战回放
+- 支持步进播放和速度控制
+- 查看 AI 预测动作和预期胜率
+- 暂停、恢复和浏览游戏历史
 
-To set up the frontend, you should make sure you have [Node.js](https://nodejs.org/) and NPM installed. Normally you just need to manually install Node.js, and the NPM package would be automatically installed together with Node.js for you. Please refer to its official website for installation of Node.js.
+## 安装
 
-You can run the following commands to verify the installation:
-```
+项目采用前后端分离架构。
+
+### 前置要求
+
+**前端**：需要安装 [Node.js](https://nodejs.org/) 和 NPM。通常只需手动安装 Node.js，NPM 会随 Node.js 自动安装。
+
+验证安装：
+```bash
 node -v
 npm -v
 ```
 
-For backend, make sure that you have **Python 3.9+** installed. The project uses [uv](https://github.com/astral-sh/uv) for Python package management.
+**后端**：需要 **Python 3.9+**。项目使用 [uv](https://github.com/astral-sh/uv) 进行 Python 包管理。
 
-### Install Frontend and Backend
+### 安装前后端依赖
 
-1. Clone the repository:
-```
-git clone https://github.com/datamllab/rlcard-showdown.git
-cd rlcard-showdown
+1. 进入项目目录：
+```bash
+cd mini-ddz
 ```
 
-2. Install frontend dependencies:
-```
+2. 安装前端依赖：
+```bash
 npm install
 ```
 
-3. Install Python dependencies using uv:
-```
+3. 安装 Python 依赖（使用 uv）：
+```bash
 uv sync
 ```
 
-Or if you prefer using pip:
-```
+或使用 pip：
+```bash
 pip install -e .
 ```
 
-### Run RLCard-Showdown
+## 运行项目
 
-1. Start the PvE server (Flask backend) with DouZero models:
-```
+1. 启动 PvE 服务器（Flask 后端）：
+```bash
 cd pve_server
 python run_douzero.py
 ```
 
-The PvE backend will run at [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+后端将运行在 [http://127.0.0.1:5000/](http://127.0.0.1:5000/)。
 
-2. In a new terminal, start the frontend:
-```
+2. 在另一个终端启动前端：
+```bash
 npm start
 ```
 
-You can access the application at [http://127.0.0.1:3000/](http://127.0.0.1:3000/).
+应用将运行在 [http://127.0.0.1:3000/](http://127.0.0.1:3000/)。
 
-**Available Pages:**
-- PvE Demo (Human vs AI): [http://127.0.0.1:3000/](http://127.0.0.1:3000/) or [http://127.0.0.1:3000/pve/doudizhu-demo](http://127.0.0.1:3000/pve/doudizhu-demo)
-- AI Replay: [http://127.0.0.1:3000/replay/doudizhu](http://127.0.0.1:3000/replay/doudizhu)
+**可用页面：**
+- PvE 演示（人机对战）：[http://127.0.0.1:3000/](http://127.0.0.1:3000/) 或 [http://127.0.0.1:3000/pve/doudizhu-demo](http://127.0.0.1:3000/pve/doudizhu-demo)
+- AI 回放：[http://127.0.0.1:3000/replay/doudizhu](http://127.0.0.1:3000/replay/doudizhu)
 
-## Features
-
-### 1. PvE Mode (Human vs AI)
-Play Dou Dizhu against the DouZero AI:
-- Choose your role: Landlord, Landlord Up, or Landlord Down
-- Real-time AI predictions with win rate estimation
-- Adjustable game speed
-- Game statistics tracking
-- Support for both English and Chinese
-
-### 2. Replay Mode
-Watch AI vs AI games:
-- Auto-generated replays from DouZero AI matches
-- Step-by-step playback with speed control
-- View AI's predicted moves and expected win rates
-- Pause, resume, and navigate through game history
-
-## Project Structure
+## 项目结构
 
 ```
-rlcard-showdown/
-├── src/                    # React frontend source code
-│   ├── components/         # React components
-│   ├── view/              # Page views (PvE, Replay)
-│   ├── utils/             # Utility functions and config
-│   └── locales/           # i18n translations (en, zh)
-├── pve_server/            # Flask backend for PvE
-│   ├── run_douzero.py     # Main Flask server
-│   ├── deep.py            # Deep learning model wrapper
-│   ├── models.py          # Model definitions
-│   ├── utils/             # Game logic utilities
-│   └── pretrained/        # Pre-trained DouZero models
-├── docs/                  # Documentation
-├── public/                # Static assets
-├── package.json           # NPM dependencies
-└── pyproject.toml         # Python project configuration
+mini-ddz/
+├── src/                    # React 前端源代码
+│   ├── components/         # React 组件
+│   ├── view/              # 页面视图（PvE、回放）
+│   ├── utils/             # 工具函数和配置
+│   ├── locales/           # 国际化翻译（en、zh）
+│   └── assets/            # 静态资源（图片、样式）
+├── pve_server/            # Flask PvE 后端
+│   ├── run_douzero.py     # Flask 主服务器
+│   ├── deep.py            # 深度学习模型包装器
+│   ├── models.py          # 模型定义
+│   ├── utils/             # 游戏逻辑工具
+│   │   ├── move_generator.py   # 动作生成器
+│   │   ├── move_detector.py    # 动作类型检测
+│   │   ├── move_selector.py    # 动作筛选器
+│   │   └── utils.py            # 通用工具
+│   ├── pretrained/        # 预训练模型
+│   │   └── douzero_pretrained/ # DouZero 预训练模型
+│   └── replays/           # 回放数据存储
+├── docs/                  # 文档
+│   ├── README.md          # 文档索引
+│   ├── guide.md           # 用户指南
+│   └── api.md             # API 文档
+├── public/                # 静态资源
+├── package.json           # NPM 依赖配置
+└── pyproject.toml         # Python 项目配置
 ```
 
-## API Endpoints
+## API 接口
 
-The Flask backend provides the following endpoints:
+Flask 后端提供以下接口：
 
-| Endpoint | Method | Description |
+| 接口 | 方法 | 描述 |
 |----------|--------|-------------|
-| `/predict` | POST | Get AI prediction for current game state |
-| `/legal` | POST | Get legal moves for given hand cards and rival move |
-| `/generate_replay` | GET | Generate a new AI vs AI replay |
-| `/replay/<replay_id>` | GET | Get replay data by ID |
-| `/list_replays` | GET | List all available replays |
+| `/predict` | POST | 获取当前游戏状态的 AI 预测 |
+| `/legal` | POST | 获取给定手牌和对手动作的可行动作 |
+| `/generate_replay` | GET | 生成新的 AI 对战回放 |
+| `/replay/<replay_id>` | GET | 根据 ID 获取回放数据 |
+| `/list_replays` | GET | 列出所有可用回放 |
 
-## Demos
+详细 API 文档请参见 [docs/api.md](docs/api.md)。
 
-![doudizhu-pve](docs/imgs/doudizhu-replay.png)
+## 技术栈
 
-## Cite DouZero
+- **前端**: React 16.x, Material-UI, i18next, Socket.io-client
+- **后端**: Flask, Flask-CORS
+- **AI 推理**: PyTorch, ONNX Runtime
+- **包管理**: NPM (前端), uv (Python)
 
-If you use this project in your research, please cite the DouZero paper:
+## 演示截图
+
+![斗地主回放](docs/imgs/doudizhu-replay.png)
+
+## 引用 DouZero
+
+如果在研究中使用本项目，请引用 DouZero 论文：
 
 ```bibtex
 @article{zha2021douzero,
@@ -132,10 +150,10 @@ If you use this project in your research, please cite the DouZero paper:
 }
 ```
 
-## Contact Us
+## 联系我们
 
-If you have any questions or feedback, feel free to open an issue on GitHub.
+如有问题或反馈，欢迎在 GitHub 上提交 Issue。
 
-## Acknowledgements
+## 致谢
 
-We would like to thank JJ World Network Technology Co., LTD for the generous support, [Chieh-An Tsai](https://anntsai.myportfolio.com/) for user interface design, and [Lei Pan](https://github.com/lpan18) for the help in visualizations.
+感谢 JJ World Network Technology Co., LTD 的慷慨支持，[Chieh-An Tsai](https://anntsai.myportfolio.com/) 的用户界面设计，以及 [Lei Pan](https://github.com/lpan18) 在可视化方面的帮助。

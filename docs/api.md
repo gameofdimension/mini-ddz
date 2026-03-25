@@ -1,44 +1,46 @@
-# API Documentation
+# API 文档
 
-## Backend Configuration
+## 后端配置
 
-The default configuration for the backend server is defined in `/src/utils/config.js`:
+后端服务器的默认配置定义在 `/src/utils/config.js`：
 
 ```javascript
 const apiUrl = 'http://127.0.0.1:8000';
 const douzeroDemoUrl = 'http://127.0.0.1:5000';
 ```
 
-Currently, only the `douzeroDemoUrl` (port 5000) is used for the PvE Flask server.
+目前仅使用 `douzeroDemoUrl`（5000 端口）用于 PvE Flask 服务器。
 
-## REST API of Backend
+## 后端 REST API
 
-The Flask backend provides the following endpoints for the Dou Dizhu PvE and replay functionality.
+Flask 后端为斗地主 PvE 和回放功能提供以下接口。
 
 ### POST /predict
 
-Get AI prediction for the current game state.
+获取当前游戏状态的 AI 预测。
 
-**Parameters:**
-| Parameter | Type | Description |
+**参数：**
+
+| 参数 | 类型 | 描述 |
 |-----------|------|-------------|
-| `player_position` | int | Player position (0=landlord, 1=landlord_down, 2=landlord_up) |
-| `player_hand_cards` | string | Current hand cards (e.g., "3456789TJQKA2X") |
-| `num_cards_left_landlord` | int | Number of cards left for landlord |
-| `num_cards_left_landlord_down` | int | Number of cards left for landlord_down |
-| `num_cards_left_landlord_up` | int | Number of cards left for landlord_up |
-| `three_landlord_cards` | string | Three landlord cards |
-| `card_play_action_seq` | string | Card play action sequence, comma-separated |
-| `other_hand_cards` | string | Other players' hand cards combined |
-| `last_move_landlord` | string | Last move by landlord |
-| `last_move_landlord_down` | string | Last move by landlord_down |
-| `last_move_landlord_up` | string | Last move by landlord_up |
-| `bomb_num` | int | Number of bombs played so far |
-| `played_cards_landlord` | string | Cards played by landlord so far |
-| `played_cards_landlord_down` | string | Cards played by landlord_down so far |
-| `played_cards_landlord_up` | string | Cards played by landlord_up so far |
+| `player_position` | int | 玩家位置（0=地主，1=地主下家，2=地主上家） |
+| `player_hand_cards` | string | 当前手牌（例如："3456789TJQKA2X"） |
+| `num_cards_left_landlord` | int | 地主剩余牌数 |
+| `num_cards_left_landlord_down` | int | 地主下家剩余牌数 |
+| `num_cards_left_landlord_up` | int | 地主上家剩余牌数 |
+| `three_landlord_cards` | string | 三张地主牌 |
+| `card_play_action_seq` | string | 出牌动作序列，逗号分隔 |
+| `other_hand_cards` | string | 其他玩家手牌合并 |
+| `last_move_landlord` | string | 地主上一轮出牌 |
+| `last_move_landlord_down` | string | 地主下家上一轮出牌 |
+| `last_move_landlord_up` | string | 地主上家上一轮出牌 |
+| `bomb_num` | int | 已出炸弹数量 |
+| `played_cards_landlord` | string | 地主已出牌 |
+| `played_cards_landlord_down` | string | 地主下家已出牌 |
+| `played_cards_landlord_up` | string | 地主上家已出牌 |
 
-**Response:**
+**响应：**
+
 ```json
 {
   "status": 0,
@@ -56,15 +58,17 @@ Get AI prediction for the current game state.
 
 ### POST /legal
 
-Get legal moves for given hand cards and rival move.
+获取给定手牌和对手动作的可行出牌。
 
-**Parameters:**
-| Parameter | Type | Description |
+**参数：**
+
+| 参数 | 类型 | 描述 |
 |-----------|------|-------------|
-| `player_hand_cards` | string | Current hand cards |
-| `rival_move` | string | The move to beat (empty string if first move) |
+| `player_hand_cards` | string | 当前手牌 |
+| `rival_move` | string | 需要压制的出牌（第一手为空字符串） |
 
-**Response:**
+**响应：**
+
 ```json
 {
   "status": 0,
@@ -75,9 +79,10 @@ Get legal moves for given hand cards and rival move.
 
 ### GET /generate_replay
 
-Generate a new AI vs AI replay.
+生成新的 AI 对战回放。
 
-**Response:**
+**响应：**
+
 ```json
 {
   "status": 0,
@@ -110,9 +115,10 @@ Generate a new AI vs AI replay.
 
 ### GET /replay/<replay_id>
 
-Get a replay by its ID.
+根据 ID 获取回放数据。
 
-**Response:**
+**响应：**
+
 ```json
 {
   "status": 0,
@@ -128,9 +134,10 @@ Get a replay by its ID.
 
 ### GET /list_replays
 
-List all available replays.
+列出所有可用回放。
 
-**Response:**
+**响应：**
+
 ```json
 {
   "status": 0,
@@ -142,33 +149,33 @@ List all available replays.
 }
 ```
 
-## Error Codes
+## 错误码
 
-| Status Code | Description |
+| 状态码 | 描述 |
 |-------------|-------------|
-| 0 | Success |
-| -1 | Unknown error |
-| 1 | Invalid player_position (must be 0, 1, or 2) |
-| 2 | Invalid number of hand cards for landlord (should be 1-20) |
-| 3 | Invalid number of hand cards for peasant (should be 1-17) |
-| 4 | Number of cards left does not align with hand cards |
-| 5 | Number of cards left not in valid range |
-| 6 | Invalid number of landlord cards (should be 0-3) |
-| 7 | Number of other hand cards does not align |
+| 0 | 成功 |
+| -1 | 未知错误 |
+| 1 | 无效的玩家位置（必须是 0、1 或 2） |
+| 2 | 地主手牌数量无效（应为 1-20） |
+| 3 | 农民手牌数量无效（应为 1-17） |
+| 4 | 剩余牌数与手牌不符 |
+| 5 | 剩余牌数不在有效范围内 |
+| 6 | 地主牌数量无效（应为 0-3） |
+| 7 | 其他手牌数量不符 |
 
-## Card Encoding
+## 牌面编码
 
-Cards are encoded using single characters:
+牌面使用单字符编码：
 
-| Card | Encoding |
+| 牌面 | 编码 |
 |------|----------|
 | 3-10 | 3, 4, 5, 6, 7, 8, 9, T |
-| Jack | J |
-| Queen | Q |
-| King | K |
-| Ace | A |
+| J | J |
+| Q | Q |
+| K | K |
+| A | A |
 | 2 | 2 |
-| Black Joker | X |
-| Red Joker | D |
+| 小王 | X |
+| 大王 | D |
 
-Suit format for display: `S3` (Spade 3), `H3` (Heart 3), `D3` (Diamond 3), `C3` (Club 3), `BJ` (Black Joker), `RJ` (Red Joker).
+显示格式：`S3`（黑桃3）、`H3`（红桃3）、`D3`（方块3）、`C3`（梅花3）、`BJ`（小王）、`RJ`（大王）。
