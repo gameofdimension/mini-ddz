@@ -27,7 +27,7 @@ function Navbar() {
     return (
         <AppBar position="fixed" className={"header-bar-wrapper"}>
             <div className={"header-bar"}>
-                <div className={"title unselectable"}>
+                <div className={"title"} onClick={() => history.push('/')} style={{ cursor: 'pointer' }}>
                     <div className={"title-text"}>Mini DDZ</div>
                 </div>
                 <div className={"stretch"} />
