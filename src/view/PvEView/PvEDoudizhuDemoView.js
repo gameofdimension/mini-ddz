@@ -351,7 +351,8 @@ function PvEDoudizhuDemoView() {
                         agentInfo: p.agentInfo || { name: p.index === mainPlayerId ? 'Player' : 'DouZero' }
                     })),
                     initHands: (replayInitHands || initHands).map(hand => hand.join(' ')),
-                    moveHistory: moveHistory
+                    moveHistory: moveHistory,
+                    source: 'pve'
                 };
                 saveReplayToBackend(replayData);
             }, 2000);

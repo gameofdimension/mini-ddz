@@ -575,6 +575,7 @@ def generate_ai_battle():
         battle_data = generate_ai_battle_data()
         battle_id = str(uuid.uuid4())[:8]
         battle_data["battle_id"] = battle_id
+        battle_data["source"] = "ai_battle"  # Mark as AI battle
 
         # Save to database
         if save_replay(battle_id, battle_data):
@@ -629,9 +630,10 @@ def get_replay_by_id(replay_id):
 
 @app.route("/list_replays", methods=["GET"])
 def list_all_replays():
-    """List all available replays"""
+    """List all available replays, optionally filtered by source"""
     try:
-        replays = list_replays(limit=100)
+        source = request.args.get("source")  # 'pve', 'ai_battle', or None for all
+        replays = list_replays(limit=100, source=source)
 
         return jsonify({"status": 0, "message": "success", "replays": replays})
     except Exception:

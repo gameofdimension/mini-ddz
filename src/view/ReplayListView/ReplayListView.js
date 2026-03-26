@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
+import Chip from '@material-ui/core/Chip';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -65,10 +66,22 @@ function ReplayListView() {
     };
 
     const formatDate = (dateString) => {
-        // dateString is in 'YYYY-MM-DD HH:MM:SS' format (UTC)
-        // Append 'Z' to treat it as UTC, then convert to local time
         const date = new Date(dateString.replace(' ', 'T') + 'Z');
         return date.toLocaleString();
+    };
+
+    const getSourceChip = (source) => {
+        const isAIBattle = source === 'ai_battle';
+        return (
+            <Chip
+                label={isAIBattle ? t('ai_battle') : t('pve_game')}
+                size="small"
+                style={{
+                    backgroundColor: isAIBattle ? '#e3f2fd' : '#f3e5f5',
+                    color: isAIBattle ? '#1565c0' : '#7b1fa2',
+                }}
+            />
+        );
     };
 
     return (
@@ -100,6 +113,7 @@ function ReplayListView() {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>{t('replay_id')}</TableCell>
+                                        <TableCell>{t('replay_type')}</TableCell>
                                         <TableCell>{t('created_at')}</TableCell>
                                         <TableCell align="center">{t('actions')}</TableCell>
                                     </TableRow>
@@ -107,7 +121,7 @@ function ReplayListView() {
                                 <TableBody>
                                     {replays.length === 0 && !loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={3} align="center">
+                                            <TableCell colSpan={4} align="center">
                                                 {t('no_replays')}
                                             </TableCell>
                                         </TableRow>
@@ -115,6 +129,7 @@ function ReplayListView() {
                                         replays.map((replay) => (
                                             <TableRow key={replay.replay_id}>
                                                 <TableCell>{replay.replay_id}</TableCell>
+                                                <TableCell>{getSourceChip(replay.source)}</TableCell>
                                                 <TableCell>{formatDate(replay.created)}</TableCell>
                                                 <TableCell align="center">
                                                     <Button
