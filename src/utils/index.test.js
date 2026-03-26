@@ -11,6 +11,8 @@ import {
     sortDoudizhuCards,
     isDoudizhuBomb,
     shuffleArray,
+    validateReplayData,
+    prepareReplayInitHands,
 } from './index';
 
 describe('utils/index.js', () => {
@@ -322,6 +324,87 @@ describe('utils/index.js', () => {
 
         it('should handle single element array', () => {
             expect(shuffleArray([1])).toEqual([1]);
+        });
+    });
+
+    describe('prepareReplayInitHands', () => {
+        it('should add landlord cards before saving for replay', () => {
+            // Simulate: landlord (idx 0) has 17 cards, gets 3 landlord cards
+            const initHands = [
+                ['S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'ST', 'SJ', 'SQ', 'SK', 'SA', 'S2', 'H2', 'D2', 'C2', 'BJ'], // 17 cards
+                ['H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'HT', 'HJ', 'HQ', 'HK', 'HA', 'D3', 'D4', 'D5', 'D6', 'D7'],
+                ['D8', 'D9', 'DT', 'DJ', 'DQ', 'DK', 'DA', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'CT', 'CJ', 'CQ'],
+            ];
+            const threeLandlordCards = ['CK', 'CA', 'RJ'];
+            const landlordIdx = 0;
+
+            const replayHands = prepareReplayInitHands(initHands, threeLandlordCards, landlordIdx);
+
+            // Landlord should now have 20 cards
+            expect(replayHands[0]).toHaveLength(20);
+            // Other players should still have 17 cards
+            expect(replayHands[1]).toHaveLength(17);
+            expect(replayHands[2]).toHaveLength(17);
+            // Landlord cards should be at the end
+            expect(replayHands[0].slice(-3)).toEqual(['CK', 'CA', 'RJ']);
+        });
+
+        it('should not modify original initHands array', () => {
+            const initHands = [
+                ['S3', 'S4', 'S5'],
+                ['H3', 'H4', 'H5'],
+                ['D3', 'D4', 'D5'],
+            ];
+            const originalFirstHand = [...initHands[0]];
+
+            prepareReplayInitHands(initHands, ['S6', 'S7', 'S8'], 0);
+
+            expect(initHands[0]).toEqual(originalFirstHand);
+        });
+
+        it('should work when landlord is at different positions', () => {
+            const initHands = [
+                ['S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'ST', 'SJ', 'SQ', 'SK', 'SA', 'S2', 'H2', 'D2', 'C2', 'BJ'],
+                ['H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'HT', 'HJ', 'HQ', 'HK', 'HA', 'D3', 'D4', 'D5', 'D6', 'D7'],
+                ['D8', 'D9', 'DT', 'DJ', 'DQ', 'DK', 'DA', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'CT', 'CJ', 'CQ'],
+            ];
+            const threeLandlordCards = ['CK', 'CA', 'RJ'];
+
+            // Landlord at index 1
+            const replayHands = prepareReplayInitHands(initHands, threeLandlordCards, 1);
+            expect(replayHands[1]).toHaveLength(20);
+            expect(replayHands[0]).toHaveLength(17);
+            expect(replayHands[2]).toHaveLength(17);
+
+            // Landlord at index 2
+            const replayHands2 = prepareReplayInitHands(initHands, threeLandlordCards, 2);
+            expect(replayHands2[2]).toHaveLength(20);
+            expect(replayHands2[0]).toHaveLength(17);
+            expect(replayHands2[1]).toHaveLength(17);
+        });
+
+        it('should produce data that passes validateReplayData', () => {
+            const initHands = [
+                ['S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'ST', 'SJ', 'SQ', 'SK', 'SA', 'S2', 'H2', 'D2', 'C2', 'BJ'],
+                ['H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'HT', 'HJ', 'HQ', 'HK', 'HA', 'D3', 'D4', 'D5', 'D6', 'D7'],
+                ['D8', 'D9', 'DT', 'DJ', 'DQ', 'DK', 'DA', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'CT', 'CJ', 'CQ'],
+            ];
+            const threeLandlordCards = ['CK', 'CA', 'RJ'];
+            const landlordIdx = 0;
+
+            const replayHands = prepareReplayInitHands(initHands, threeLandlordCards, landlordIdx);
+
+            const replayData = {
+                playerInfo: [
+                    { id: 0, index: 0, role: 'landlord' },
+                    { id: 1, index: 1, role: 'peasant' },
+                    { id: 2, index: 2, role: 'peasant' },
+                ],
+                initHands: replayHands.map((hand) => hand.join(' ')),
+            };
+
+            const validation = validateReplayData(replayData);
+            expect(validation.valid).toBe(true);
         });
     });
 });

@@ -250,3 +250,48 @@ export function shuffleArray(inputArray) {
     }
     return array;
 }
+
+/**
+ * Validate replay data - landlord should have exactly 20 cards
+ * @param {Object} battleData - The replay data object
+ * @returns {Object} - { valid: boolean, error?: string, landlordCardCount?: number }
+ */
+export function validateReplayData(battleData) {
+    if (!battleData || !battleData.playerInfo || !battleData.initHands) {
+        return { valid: false, error: 'Missing required replay data fields' };
+    }
+
+    const landlordInfo = battleData.playerInfo.find((element) => element.role === 'landlord');
+    if (!landlordInfo) {
+        return { valid: false, error: 'No landlord found in player info' };
+    }
+
+    const landlordHand = battleData.initHands[landlordInfo.index];
+    const landlordCardCount = landlordHand ? landlordHand.split(' ').filter((c) => c).length : 0;
+
+    if (landlordCardCount !== 20) {
+        return {
+            valid: false,
+            error: `Invalid replay data: landlord should have 20 cards, but got ${landlordCardCount}. This replay may be corrupted or from an old version.`,
+            landlordCardCount,
+        };
+    }
+
+    return { valid: true, landlordCardCount };
+}
+
+/**
+ * Prepare replay init hands - add landlord cards BEFORE saving for replay
+ * This ensures landlord has 20 cards in the saved replay data.
+ * @param {Array} initHands - Array of 3 hands (arrays of card strings)
+ * @param {Array} threeLandlordCards - Array of 3 landlord cards
+ * @param {number} landlordIdx - Index of the landlord player
+ * @returns {Array} - The correct replay init hands (landlord with 20 cards)
+ */
+export function prepareReplayInitHands(initHands, threeLandlordCards, landlordIdx) {
+    // Create a copy to avoid mutating original
+    const handsCopy = initHands.map((hand) => hand.slice());
+    // Add landlord cards FIRST
+    handsCopy[landlordIdx] = handsCopy[landlordIdx].concat(threeLandlordCards.slice());
+    return handsCopy;
+}
