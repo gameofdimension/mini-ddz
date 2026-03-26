@@ -6,10 +6,10 @@
 
 ```javascript
 const apiUrl = 'http://127.0.0.1:8000';
-const douzeroDemoUrl = 'http://127.0.0.1:5000';
+const douzeroDemoUrl = 'http://127.0.0.1:5050';
 ```
 
-目前仅使用 `douzeroDemoUrl`（5000 端口）用于 PvE Flask 服务器。
+目前仅使用 `douzeroDemoUrl`（5050 端口）用于 PvE Flask 服务器。
 
 ## 后端 REST API
 

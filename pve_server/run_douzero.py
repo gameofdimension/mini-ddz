@@ -482,7 +482,7 @@ def predict():
                     parameters.append(key+'='+request.form.get(key))
                     print(key+':', request.form.get(key))
                 command += '&'.join(parameters)
-                command += '" "http://127.0.0.1:5000/predict"'
+                command += '" "http://127.0.0.1:5050/predict"'
                 print('Command:', command)
                 print('Rival Move:', rival_move)
                 print('legal_actions:', info_set.legal_actions)
@@ -635,7 +635,7 @@ def main():
     parser = argparse.ArgumentParser(description='DouZero backend')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
-    parser.add_argument('--port', type=int, default=5000, help='Port to bind to (default: 5000)')
+    parser.add_argument('--port', type=int, default=5050, help='Port to bind to (default: 5050)')
     args = parser.parse_args()
     app.run(host=args.host, port=args.port, debug=args.debug)
 
