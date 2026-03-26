@@ -573,8 +573,29 @@ function PvEDoudizhuDemoView() {
                 setConsiderationTime(currentConsiderationTime);
             } else {
                 // consideration time used up for current player
-                // if current player is controlled by user, play a random card
-                // todo
+                // if current player is controlled by user, auto play or pass
+                if (gameState.currentPlayer === mainPlayerId && syncGameStatus === 'playing') {
+                    if (legalActions.turn === gameState.turn && legalActions.actions.length > 0) {
+                        // Auto play the first legal action
+                        const autoPlayRanks = legalActions.actions[0].split('');
+                        let autoPlayCards = [];
+                        gameState.hands[mainPlayerId].forEach((card) => {
+                            const { rank } = card2SuiteAndRank(card);
+                            const idx = autoPlayRanks.indexOf(rank);
+                            if (idx >= 0) {
+                                autoPlayRanks.splice(idx, 1);
+                                autoPlayCards.push(card);
+                            }
+                        });
+                        if (autoPlayCards.length > 0) {
+                            proceedNextTurn(autoPlayCards, false);
+                        } else {
+                            proceedNextTurn([], false);
+                        }
+                    } else {
+                        proceedNextTurn([], false);
+                    }
+                }
             }
         }, considerationTimeDeduction);
     };
