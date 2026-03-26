@@ -7,7 +7,8 @@
     "reset": "Reset",
     "replay": "Replay",
     "replay_list": "Replay List",
-    "refresh": "Refresh",
+    "replay_id": "Replay ID",
+    "replay_type": "Type",
     "created_at": "Created At",
     "actions": "Actions",
     "no_replays": "No replays available",
@@ -15,6 +16,11 @@
     "delete": "Delete",
     "replay_deleted": "Replay deleted",
     "failed_to_delete_replay": "Failed to delete replay",
+    "ai_battle": "AI Battle",
+    "pve_game": "PvE Game",
+    "refresh": "Refresh",
+    "play": "Play",
+    "loading...": "Loading...",
 
     "doudizhu": {
         "ai_hand_faceup": "AI Hand Face-Up",

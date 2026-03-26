@@ -7,7 +7,8 @@
     "reset": "重置",
     "replay": "回放",
     "replay_list": "回放列表",
-    "refresh": "刷新",
+    "replay_id": "回放ID",
+    "replay_type": "类型",
     "created_at": "创建时间",
     "actions": "操作",
     "no_replays": "暂无回放",
@@ -15,6 +16,11 @@
     "delete": "删除",
     "replay_deleted": "回放已删除",
     "failed_to_delete_replay": "删除回放失败",
+    "ai_battle": "AI对战",
+    "pve_game": "人机对战",
+    "refresh": "刷新",
+    "play": "播放",
+    "loading...": "加载中...",
 
     "doudizhu": {
         "ai_hand_faceup": "显示AI手牌",
