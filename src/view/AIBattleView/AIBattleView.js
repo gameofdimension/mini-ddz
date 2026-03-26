@@ -63,8 +63,7 @@ class AIBattleView extends React.Component {
     }
 
     componentDidMount() {
-        // Auto start AI battle when page loads
-        this.startAIBattle();
+        // Do not auto start - user needs to click Start button
     }
 
     startAIBattle() {
