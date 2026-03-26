@@ -96,6 +96,23 @@ class DoudizhuReplayView extends React.Component {
                 
                 const battleData = res.data;
 
+                // Validate replay data: landlord should have 20 cards
+                const landlordInfo = battleData.playerInfo.find((element) => element.role === 'landlord');
+                if (landlordInfo) {
+                    const landlordHand = battleData.initHands[landlordInfo.index];
+                    const landlordCardCount = landlordHand ? landlordHand.split(' ').filter(c => c).length : 0;
+                    if (landlordCardCount !== 20) {
+                        this.setState({ fullScreenLoading: false });
+                        Message({
+                            message: `Invalid replay data: landlord should have 20 cards, but got ${landlordCardCount}. This replay may be corrupted or from an old version.`,
+                            type: 'error',
+                            showClose: true,
+                            duration: 5000,
+                        });
+                        return;
+                    }
+                }
+
                 // init battle info
                 this.moveHistory = battleData.moveHistory;
                 // Pre-process move history
