@@ -35,6 +35,7 @@ dev = [
     "pytest-cov",
     "black",
     "ruff",
+    "pre-commit",
 ]
 
 [project.scripts]
@@ -47,13 +48,23 @@ default-groups = []
 index-url = "https://pypi.org/simple"
 
 [tool.black]
-line-length = 100
+line-length = 120
 target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.ruff]
-line-length = 100
-select = ["E", "F", "I", "W"]
-ignore = ["E501"]
+line-length = 120
+
+[tool.ruff.lint]
+# Match .flake8 select: B,C,E,F,N,P,T4,W,B9 (using ruff compatible subset)
+select = ["E", "F", "I", "W", "N", "B"]
+ignore = [
+    # from .flake8 (ruff compatible subset)
+    "E203", "E302", "E303", "E305", "E402", "E501", "E721", "E731", "E741",
+    "F405", "F821", "F841",
+    "C408",
+    "N803", "N806", "N812", "N817",
+    "B007", "B008",
+]
 
 [build-system]
 requires = ["hatchling"]

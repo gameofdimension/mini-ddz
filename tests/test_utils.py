@@ -1,18 +1,35 @@
 """Tests for utils/utils.py"""
-import pytest
-import sys
+
 import os
+import sys
 
 # Add pve_server to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pve_server'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
 from utils.utils import (
-    MIN_SINGLE_CARDS, MIN_PAIRS, MIN_TRIPLES,
-    TYPE_0_PASS, TYPE_1_SINGLE, TYPE_2_PAIR, TYPE_3_TRIPLE,
-    TYPE_4_BOMB, TYPE_5_KING_BOMB, TYPE_6_3_1, TYPE_7_3_2,
-    TYPE_8_SERIAL_SINGLE, TYPE_9_SERIAL_PAIR, TYPE_10_SERIAL_TRIPLE,
-    TYPE_11_SERIAL_3_1, TYPE_12_SERIAL_3_2, TYPE_13_4_2, TYPE_14_4_22,
-    TYPE_15_WRONG, PASS, CALL, RAISE, select
+    CALL,
+    MIN_PAIRS,
+    MIN_SINGLE_CARDS,
+    MIN_TRIPLES,
+    PASS,
+    RAISE,
+    TYPE_0_PASS,
+    TYPE_1_SINGLE,
+    TYPE_2_PAIR,
+    TYPE_3_TRIPLE,
+    TYPE_4_BOMB,
+    TYPE_5_KING_BOMB,
+    TYPE_6_3_1,
+    TYPE_7_3_2,
+    TYPE_8_SERIAL_SINGLE,
+    TYPE_9_SERIAL_PAIR,
+    TYPE_10_SERIAL_TRIPLE,
+    TYPE_11_SERIAL_3_1,
+    TYPE_12_SERIAL_3_2,
+    TYPE_13_4_2,
+    TYPE_14_4_22,
+    TYPE_15_WRONG,
+    select,
 )
 
 

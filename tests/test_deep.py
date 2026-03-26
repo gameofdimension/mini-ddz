@@ -1,12 +1,9 @@
 """Tests for deep.py"""
-import pytest
-import numpy as np
-from collections import Counter
-import torch
 
-from deep import (
-    Card2Column, NumOnes2Array, _get_one_hot_bomb, _process_action_seq
-)
+import numpy as np
+import pytest
+import torch
+from deep import Card2Column, NumOnes2Array, _get_one_hot_bomb, _process_action_seq
 
 
 class TestCard2Column:
@@ -84,7 +81,7 @@ class TestGetOneHotBomb:
 
 class TestProcessActionSeq:
     """Test _process_action_seq function."""
-    
+
     def test_short_sequence(self):
         """Test processing short action sequence."""
         seq = [[3], [4], [5]]
@@ -110,54 +107,73 @@ class TestProcessActionSeq:
 
 class TestDeepAgent:
     """Test DeepAgent class."""
-    
+
     @pytest.fixture
     def mock_model(self):
         """Create a mock model for testing."""
+
         class MockModel:
             def __init__(self, position, model_dir, use_onnx):
                 self.position = position
                 self.model_dir = model_dir
                 self.use_onnx = use_onnx
-            
+
             def run(self, output_names, input_feed):
                 return [[0.5, 0.3, 0.2]]
-            
+
             def forward(self, z, x):
                 return torch.tensor([[0.5], [0.3], [0.2]])
-            
+
             def __call__(self, z, x):
                 return self.forward(z, x)
-        
+
         return MockModel
-    
+
     def test_deep_agent_init_landlord(self, monkeypatch, mock_model):
         """Test DeepAgent initialization for landlord."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         assert agent is not None
-        assert hasattr(agent, 'model')
-        assert agent.use_onnx == False
-    
+        assert hasattr(agent, "model")
+        assert agent.use_onnx is False
+
     def test_deep_agent_init_landlord_up(self, monkeypatch, mock_model):
         """Test DeepAgent initialization for landlord_up."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord_up', '/tmp/test', use_onnx=False)
-        assert hasattr(agent, 'model')
+
+        agent = DeepAgent("landlord_up", "/tmp/test", use_onnx=False)
+        assert hasattr(agent, "model")
 
     def test_cards2array_empty(self, monkeypatch, mock_model):
         """Test converting empty cards to array."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         result = agent.cards2array([])
         assert len(result) == 54
         assert np.all(result == 0)
@@ -165,10 +181,16 @@ class TestDeepAgent:
     def test_cards2array_with_cards(self, monkeypatch, mock_model):
         """Test converting cards to array."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         # Test with a 3 of spades (value 3)
         result = agent.cards2array([3])
         assert len(result) == 54
@@ -176,10 +198,16 @@ class TestDeepAgent:
     def test_cards2array_with_jokers(self, monkeypatch, mock_model):
         """Test converting jokers."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         result = agent.cards2array([20, 30])
         assert len(result) == 54
         # Last two positions are jokers
@@ -189,10 +217,16 @@ class TestDeepAgent:
     def test_get_one_hot_array(self, monkeypatch, mock_model):
         """Test one-hot encoding for card counts."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         result = agent.get_one_hot_array(5, 20)
         assert result[4] == 1  # 5th position (index 4) should be 1
         assert len(result) == 20
@@ -200,10 +234,16 @@ class TestDeepAgent:
     def test_action_seq_list2array(self, monkeypatch, mock_model):
         """Test converting action sequence to array."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         seq = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
         result = agent.action_seq_list2array(seq)
         # Result should be reshaped to (5, 162)
@@ -212,10 +252,15 @@ class TestDeepAgent:
     def test_act_landlord(self, monkeypatch, mock_model):
         """Test act method for landlord."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        
+
         class MockInfoSet:
             def __init__(self):
                 self.player_position = 0  # landlord
@@ -229,21 +274,26 @@ class TestDeepAgent:
                 self.rival_move = []
                 self.legal_actions = [[3], [4], [5]]
                 self.last_moves = [[], [], []]
-        
-        agent = DeepAgent('landlord', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord", "/tmp/test", use_onnx=False)
         infoset = MockInfoSet()
         actions, confidences = agent.act(infoset)
         assert isinstance(actions, list)
         # confidences can be list or numpy array
-        assert hasattr(confidences, '__len__')
-    
+        assert hasattr(confidences, "__len__")
+
     def test_act_farmer(self, monkeypatch, mock_model):
         """Test act method for farmer."""
         import deep
-        monkeypatch.setattr(deep, '_load_model', lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx))
-        
+
+        monkeypatch.setattr(
+            deep,
+            "_load_model",
+            lambda pos, model_dir, use_onnx: mock_model(pos, model_dir, use_onnx),
+        )
+
         from deep import DeepAgent
-        
+
         class MockInfoSet:
             def __init__(self):
                 self.player_position = 1  # farmer (landlord_down)
@@ -257,10 +307,10 @@ class TestDeepAgent:
                 self.rival_move = []
                 self.legal_actions = [[3], [4], [5]]
                 self.last_moves = [[], [], []]
-        
-        agent = DeepAgent('landlord_down', '/tmp/test', use_onnx=False)
+
+        agent = DeepAgent("landlord_down", "/tmp/test", use_onnx=False)
         infoset = MockInfoSet()
         actions, confidences = agent.act(infoset)
         assert isinstance(actions, list)
         # confidences can be list or numpy array
-        assert hasattr(confidences, '__len__')
+        assert hasattr(confidences, "__len__")
