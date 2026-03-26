@@ -316,6 +316,119 @@ class TestFlaskRoutes:
         data = json.loads(response.data)
         assert "status" in data
 
+    def test_save_replay_no_data(self, client, temp_db):
+        """Test save replay with no data."""
+        import replay_db
+
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        response = client.post("/save_replay", data=None, content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        # When JSON parsing fails, it returns -1
+        assert data["status"] == -1
+
+    def test_save_replay_invalid_player_info(self, client, temp_db):
+        """Test save replay with invalid playerInfo."""
+        import replay_db
+
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        # Missing playerInfo
+        replay_data = {"initHands": ["S3 S4 S5", "H3 H4 H5", "D3 D4 D5"], "moveHistory": []}
+        response = client.post("/save_replay", data=json.dumps(replay_data), content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["status"] == 2
+
+        # Wrong number of players
+        replay_data = {
+            "playerInfo": [{"id": 0, "role": "landlord"}],
+            "initHands": ["S3 S4 S5", "H3 H4 H5", "D3 D4 D5"],
+            "moveHistory": [],
+        }
+        response = client.post("/save_replay", data=json.dumps(replay_data), content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["status"] == 2
+
+    def test_save_replay_invalid_init_hands(self, client, temp_db):
+        """Test save replay with invalid initHands."""
+        import replay_db
+
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        # Missing initHands
+        replay_data = {
+            "playerInfo": [
+                {"id": 0, "index": 0, "role": "landlord"},
+                {"id": 1, "index": 1, "role": "peasant"},
+                {"id": 2, "index": 2, "role": "peasant"},
+            ],
+            "moveHistory": [],
+        }
+        response = client.post("/save_replay", data=json.dumps(replay_data), content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["status"] == 3
+
+    def test_save_replay_landlord_wrong_card_count(self, client, temp_db):
+        """Test save replay when landlord has wrong number of cards."""
+        import replay_db
+
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        # Landlord with only 17 cards (should be 20)
+        replay_data = {
+            "playerInfo": [
+                {"id": 0, "index": 0, "role": "landlord"},
+                {"id": 1, "index": 1, "role": "peasant"},
+                {"id": 2, "index": 2, "role": "peasant"},
+            ],
+            "initHands": [
+                "S3 S4 S5 S6 S7 S8 S9 ST SJ SQ SK SA S2 H2 D2 C2 BJ",  # 17 cards
+                "H3 H4 H5 H6 H7 H8 H9 HT HJ HQ HK HA D3 D4 D5 D6 D7",
+                "D8 D9 DT DJ DQ DK DA C3 C4 C5 C6 C7 C8 C9 CT CJ CQ",
+            ],
+            "moveHistory": [],
+        }
+        response = client.post("/save_replay", data=json.dumps(replay_data), content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["status"] == 4
+        assert "expected 20 cards" in data["message"]
+
+    def test_save_replay_valid_data(self, client, temp_db):
+        """Test save replay with valid data (landlord has 20 cards)."""
+        import replay_db
+
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        # Landlord with 20 cards, peasants with 17 each
+        replay_data = {
+            "playerInfo": [
+                {"id": 0, "index": 0, "role": "landlord"},
+                {"id": 1, "index": 1, "role": "peasant"},
+                {"id": 2, "index": 2, "role": "peasant"},
+            ],
+            "initHands": [
+                "S3 S4 S5 S6 S7 S8 S9 ST SJ SQ SK SA S2 H2 D2 C2 BJ RJ S2 C2",  # 20 cards
+                "H3 H4 H5 H6 H7 H8 H9 HT HJ HQ HK HA D3 D4 D5 D6 D7",
+                "D8 D9 DT DJ DQ DK DA C3 C4 C5 C6 C7 C8 C9 CT CJ CQ",
+            ],
+            "moveHistory": [],
+        }
+        response = client.post("/save_replay", data=json.dumps(replay_data), content_type="application/json")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["status"] == 0
+        assert "replay_id" in data
+
     def test_get_replay_not_found(self, client, temp_db):
         """Test get replay when not found."""
         import replay_db

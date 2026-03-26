@@ -557,9 +557,10 @@ function PvEDoudizhuDemoView() {
         playerInfo[landlordIdx].douzeroPlayerPosition = 0;
         playerInfo[(landlordIdx + 1) % 3].douzeroPlayerPosition = 1;
         playerInfo[(landlordIdx + 2) % 3].douzeroPlayerPosition = 2;
-        // Save original hands for replay before modifying
-        replayInitHands = initHands.map(hand => hand.slice());
+        // Add landlord cards to game state
         initHands[landlordIdx] = initHands[landlordIdx].concat(threeLandlordCards.slice());
+        // Save for replay AFTER adding landlord cards
+        replayInitHands = initHands.map(hand => hand.slice());
         setGameStatus('playing');
         syncGameStatus = 'playing';
     };

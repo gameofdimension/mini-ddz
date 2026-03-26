@@ -597,6 +597,30 @@ def save_replay_endpoint():
         if not replay_data:
             return jsonify({"status": 1, "message": "no data provided"})
 
+        # Validate replay data
+        player_info = replay_data.get("playerInfo", [])
+        init_hands = replay_data.get("initHands", [])
+
+        if not player_info or len(player_info) != 3:
+            return jsonify({"status": 2, "message": "invalid playerInfo: must have 3 players"})
+
+        if not init_hands or len(init_hands) != 3:
+            return jsonify({"status": 3, "message": "invalid initHands: must have 3 hands"})
+
+        # Validate landlord has 20 cards
+        landlord_info = next((p for p in player_info if p.get("role") == "landlord"), None)
+        if landlord_info:
+            landlord_idx = landlord_info.get("index", 0)
+            landlord_hand = init_hands[landlord_idx] if landlord_idx < len(init_hands) else ""
+            landlord_card_count = len(landlord_hand.split()) if landlord_hand else 0
+            if landlord_card_count != 20:
+                return jsonify(
+                    {
+                        "status": 4,
+                        "message": f"invalid landlord hand: expected 20 cards, got {landlord_card_count}",
+                    }
+                )
+
         replay_id = str(uuid.uuid4())[:8]
         replay_data["replay_id"] = replay_id
 
