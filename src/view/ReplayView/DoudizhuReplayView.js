@@ -266,85 +266,20 @@ class DoudizhuReplayView extends React.Component {
     }
 
     startReplay() {
-        // Check if replay_id is in URL, if so reload the page to clear it
+        // Check if replay_id is in URL, if so reload the same replay
         const urlParams = new URLSearchParams(window.location.search);
         const replayId = urlParams.get('replay_id');
         if (replayId) {
-            window.location.href = '/replay/doudizhu';
+            this.loadReplay(replayId);
             return;
         }
 
-        // Clear old state to prevent mixing with new replay
-        this.gameStateHistory = [];
-        this.moveHistory = [];
-        if (this.gameStateTimeout) {
-            window.clearTimeout(this.gameStateTimeout);
-            this.gameStateTimeout = null;
-        }
-
-        // Generate a new AI battle from DouZero backend
-        const requestUrl = `${douzeroDemoUrl}/generate_ai_battle`;
-
-        // start full screen loading
-        this.setState({ fullScreenLoading: true, gameSpeed: 0 });
-        axios
-            .get(requestUrl)
-            .then((res) => {
-                res = res.data;
-                
-                if (res.status !== 0) {
-                    throw new Error(res.message || 'Failed to generate AI battle');
-                }
-                
-                const replayData = res.data;
-
-                // init replay info
-                this.moveHistory = replayData.moveHistory;
-                // pre-process move history
-                for (const historyItem of this.moveHistory) {
-                    if (historyItem.info && !Array.isArray(historyItem.info)) {
-                        if ('probs' in historyItem.info) {
-                            historyItem.info.probs = Object.entries(historyItem.info.probs).sort(
-                                (a, b) => Number(b[1]) - Number(a[1]),
-                            );
-                        } else if ('values' in historyItem.info) {
-                            historyItem.info.values = Object.entries(historyItem.info.values).sort(
-                                (a, b) => Number(b[1]) - Number(a[1]),
-                            );
-                        }
-                    }
-                }
-                console.log('pre-processed move history', this.moveHistory);
-
-                let gameInfo = deepCopy(this.initGameState);
-                gameInfo.gameStatus = 'playing';
-                gameInfo.playerInfo = replayData.playerInfo;
-                gameInfo.hands = replayData.initHands.map((element) => {
-                    return this.cardStr2Arr(element);
-                });
-                // the first player should be landlord
-                gameInfo.currentPlayer = replayData.playerInfo.find((element) => {
-                    return element.role === 'landlord';
-                }).index;
-                // Always push initial state to history
-                this.gameStateHistory.push(gameInfo);
-                this.setState({ gameInfo: gameInfo, fullScreenLoading: false }, () => {
-                    if (this.gameStateTimeout) {
-                        window.clearTimeout(this.gameStateTimeout);
-                        this.gameStateTimeout = null;
-                    }
-                    // loop to update game state
-                    this.gameStateTimer();
-                });
-            })
-            .catch(() => {
-                this.setState({ fullScreenLoading: false });
-                Message({
-                    message: 'Error in getting AI battle data',
-                    type: 'error',
-                    showClose: true,
-                });
-            });
+        // No replay_id: show error message - user should select a replay from the list
+        Message({
+            message: 'Please select a replay from the replay list',
+            type: 'warning',
+            showClose: true,
+        });
     }
 
     runNewTurn() {
