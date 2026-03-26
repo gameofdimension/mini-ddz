@@ -7,10 +7,10 @@ from deep import DeepAgent
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from replay_db import delete_replay, get_replay, list_replays, save_replay
+from utils.move_generator import MovesGener
 
 from utils import move_detector as md
 from utils import move_selector as ms
-from utils.move_generator import MovesGener
 
 app = Flask(__name__)
 CORS(app)

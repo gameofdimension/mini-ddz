@@ -18,8 +18,7 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS replays (
             replay_id TEXT PRIMARY KEY,
             player_info TEXT NOT NULL,
@@ -27,8 +26,7 @@ def init_db():
             move_history TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """
-    )
+    """)
 
     conn.commit()
     conn.close()
