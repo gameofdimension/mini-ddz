@@ -94,10 +94,10 @@ class DoudizhuReplayView extends React.Component {
                     throw new Error(res.message || 'Failed to load replay');
                 }
                 
-                const replayData = res.data;
+                const battleData = res.data;
 
-                // init replay info
-                this.moveHistory = replayData.moveHistory;
+                // init battle info
+                this.moveHistory = battleData.moveHistory;
                 // Pre-process move history
                 for (const historyItem of this.moveHistory) {
                     if (historyItem.info && !Array.isArray(historyItem.info)) {
@@ -116,12 +116,12 @@ class DoudizhuReplayView extends React.Component {
 
                 let gameInfo = deepCopy(this.initGameState);
                 gameInfo.gameStatus = 'playing';
-                gameInfo.playerInfo = replayData.playerInfo;
-                gameInfo.hands = replayData.initHands.map((element) => {
+                gameInfo.playerInfo = battleData.playerInfo;
+                gameInfo.hands = battleData.initHands.map((element) => {
                     return this.cardStr2Arr(element);
                 });
                 // the first player should be landlord
-                gameInfo.currentPlayer = replayData.playerInfo.find((element) => {
+                gameInfo.currentPlayer = battleData.playerInfo.find((element) => {
                     return element.role === 'landlord';
                 }).index;
                 // Always push initial state to history
@@ -282,8 +282,8 @@ class DoudizhuReplayView extends React.Component {
             this.gameStateTimeout = null;
         }
 
-        // Generate a new replay from DouZero backend
-        const requestUrl = `${douzeroDemoUrl}/generate_replay`;
+        // Generate a new AI battle from DouZero backend
+        const requestUrl = `${douzeroDemoUrl}/generate_ai_battle`;
 
         // start full screen loading
         this.setState({ fullScreenLoading: true, gameSpeed: 0 });
@@ -293,7 +293,7 @@ class DoudizhuReplayView extends React.Component {
                 res = res.data;
                 
                 if (res.status !== 0) {
-                    throw new Error(res.message || 'Failed to generate replay');
+                    throw new Error(res.message || 'Failed to generate AI battle');
                 }
                 
                 const replayData = res.data;
@@ -340,7 +340,7 @@ class DoudizhuReplayView extends React.Component {
             .catch(() => {
                 this.setState({ fullScreenLoading: false });
                 Message({
-                    message: 'Error in getting replay data',
+                    message: 'Error in getting AI battle data',
                     type: 'error',
                     showClose: true,
                 });

@@ -114,7 +114,7 @@ Flask 后端提供以下接口：
 |----------|--------|-------------|
 | `/predict` | POST | 获取当前游戏状态的 AI 预测 |
 | `/legal` | POST | 获取给定手牌和对手动作的可行动作 |
-| `/generate_replay` | GET | 生成新的 AI 对战回放 |
+| `/generate_ai_battle` | GET | 生成新的 3 AI 自动对战 |
 | `/replay/<replay_id>` | GET | 根据 ID 获取回放数据 |
 | `/list_replays` | GET | 列出所有可用回放 |
 

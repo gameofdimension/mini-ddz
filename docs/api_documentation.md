@@ -166,7 +166,7 @@ const legalActions = apiRes.data.legal_action.split(',');
 
 ### 3. 生成回放接口
 
-#### `GET /generate_replay`
+#### `GET /generate_ai_battle`
 
 生成新的 AI 对战回放数据（运行一局完整的 AI 对战）。
 
@@ -211,7 +211,7 @@ const legalActions = apiRes.data.legal_action.split(',');
 **前端调用示例**:
 
 ```javascript
-const response = await axios.get(`${douzeroDemoUrl}/generate_replay`);
+const response = await axios.get(`${douzeroDemoUrl}/generate_ai_battle`);
 const replayData = response.data.data;
 ```
 
@@ -443,7 +443,7 @@ const response = await axios.delete(`${douzeroDemoUrl}/delete_replay/${replayId}
 | 页面 | 路径 | 使用的 API |
 |------|------|-----------|
 | PvE 对战 | `/pve/doudizhu-demo` | `/predict`, `/legal`, `/save_replay` |
-| 回放观看 | `/replay/doudizhu` | `/generate_replay`, `/replay/<id>` |
+| 回放观看 | `/replay/doudizhu` | `/generate_ai_battle`, `/replay/<id>` |
 | 回放列表 | `/replay/list` | `/list_replays`, `/delete_replay/<id>` |
 
 ---
