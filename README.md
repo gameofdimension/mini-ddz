@@ -62,7 +62,7 @@ uv sync
 uv run python pve_server/run_douzero.py
 ```
 
-后端将运行在 [http://127.0.0.1:5000/](http://127.0.0.1:5000/)。
+后端将运行在 [http://127.0.0.1:5050/](http://127.0.0.1:5050/)。
 
 2. 在另一个终端启动前端：
 ```bash

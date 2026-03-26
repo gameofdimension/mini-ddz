@@ -58,7 +58,7 @@
 
 ### 无法连接后端
 
-- 确保 Flask 服务器在 5000 端口运行
+- 确保 Flask 服务器在 5050 端口运行
 - 检查 `pve_server/run_douzero.py` 是否已启动
 - 验证 `src/utils/config.js` 中的后端 URL 配置
 
