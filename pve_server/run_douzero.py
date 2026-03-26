@@ -528,7 +528,7 @@ def predict():
                 win_rates[actions[i]] = str(round((win_rate + 1) / 2, 4))
                 result[actions[i]] = str(round(actions_confidence[i], 6))
 
-            ############## DEBUG ################
+            # DEBUG
             if app.debug:
                 print("--------------- DEBUG START --------------")
                 command = 'curl --data "'
@@ -543,7 +543,7 @@ def predict():
                 print("legal_actions:", info_set.legal_actions)
                 print("Result:", result)
                 print("--------------- DEBUG END --------------")
-            ############## DEBUG ################
+            # END DEBUG
             return jsonify({"status": 0, "message": "success", "result": result, "win_rates": win_rates})
         except Exception:
             import traceback
