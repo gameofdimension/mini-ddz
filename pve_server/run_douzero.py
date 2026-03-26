@@ -222,7 +222,7 @@ def _get_legal_card_play_actions(player_hand_cards, rival_move):
     return moves
 
 
-def generate_replay_data():
+def generate_ai_battle_data():
     """Generate a replay by running a game with DouZero AI"""
     # Deal cards
     cards = _deal_cards()
@@ -511,21 +511,21 @@ def legal():
             return jsonify({'status': -1, 'message': 'unkown error'})
 
 
-@app.route('/generate_replay', methods=['GET'])
-def generate_replay():
+@app.route('/generate_ai_battle', methods=['GET'])
+def generate_ai_battle():
     """Generate a new replay by running a game with AI"""
     try:
-        replay_data = generate_replay_data()
-        replay_id = str(uuid.uuid4())[:8]
-        replay_data['replay_id'] = replay_id
+        battle_data = generate_ai_battle_data()
+        battle_id = str(uuid.uuid4())[:8]
+        battle_data['battle_id'] = battle_id
         
         # Save to database
-        if save_replay(replay_id, replay_data):
+        if save_replay(battle_id, battle_data):
             return jsonify({
                 'status': 0,
                 'message': 'success',
-                'replay_id': replay_id,
-                'data': replay_data
+                'battle_id': battle_id,
+                'data': battle_data
             })
         else:
             return jsonify({'status': -1, 'message': 'failed to save replay'})

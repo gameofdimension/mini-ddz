@@ -282,13 +282,13 @@ class TestFlaskRoutes:
         assert data['status'] == 0
         assert 'legal_action' in data
 
-    def test_generate_replay(self, client, temp_db):
+    def test_generate_ai_battle(self, client, temp_db):
         """Test generate replay endpoint."""
         import replay_db
         replay_db.DB_DIR = temp_db
         replay_db.DB_PATH = os.path.join(temp_db, 'test.db')
         
-        response = client.get('/generate_replay')
+        response = client.get('/generate_ai_battle')
         assert response.status_code == 200
         data = json.loads(response.data)
         assert 'status' in data
