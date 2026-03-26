@@ -26,6 +26,7 @@ db.sqlite3
 __pycache__
 *.swp
 uploaded_agents
+.ruff_cache
 
 # idea
 /.idea

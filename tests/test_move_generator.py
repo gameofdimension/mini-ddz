@@ -1,9 +1,9 @@
 """Tests for utils/move_generator.py"""
-import pytest
-import sys
-import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pve_server'))
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
 from utils.move_generator import MovesGener
 
@@ -174,7 +174,7 @@ class TestGenType5KingBomb:
         assert [20, 30] in result
 
 
-class TestGenType6_3_1:
+class TestGenType6x3x1:
     """Test gen_type_6_3_1 method."""
 
     def test_3_1_from_empty(self):
@@ -195,7 +195,7 @@ class TestGenType6_3_1:
         assert has_4_kicker
 
 
-class TestGenType7_3_2:
+class TestGenType7x3x2:
     """Test gen_type_7_3_2 method."""
 
     def test_3_2_from_empty(self):
@@ -273,7 +273,7 @@ class TestGenType10SerialTriple:
         assert [3, 3, 3, 4, 4, 4] in result
 
 
-class TestGenType11Serial3_1:
+class TestGenType11Serial3x1:
     """Test gen_type_11_serial_3_1 method."""
 
     def test_serial_3_1_valid(self):
@@ -284,7 +284,7 @@ class TestGenType11Serial3_1:
         assert len(result) > 0
 
 
-class TestGenType12Serial3_2:
+class TestGenType12Serial3x2:
     """Test gen_type_12_serial_3_2 method."""
 
     def test_serial_3_2_valid(self):
@@ -294,7 +294,7 @@ class TestGenType12Serial3_2:
         assert len(result) > 0
 
 
-class TestGenType13_4_2:
+class TestGenType13x4x2:
     """Test gen_type_13_4_2 method."""
 
     def test_4_2_with_bomb(self):
@@ -310,7 +310,7 @@ class TestGenType13_4_2:
         assert result == []
 
 
-class TestGenType14_4_22:
+class TestGenType14x4x22:
     """Test gen_type_14_4_22 method."""
 
     def test_4_22_with_bomb_and_pairs(self):

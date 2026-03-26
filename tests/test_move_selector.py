@@ -1,9 +1,9 @@
 """Tests for utils/move_selector.py"""
-import pytest
-import sys
-import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pve_server'))
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
 from utils.move_selector import (
     common_handle,
@@ -19,7 +19,7 @@ from utils.move_selector import (
     filter_type_11_serial_3_1,
     filter_type_12_serial_3_2,
     filter_type_13_4_2,
-    filter_type_14_4_22
+    filter_type_14_4_22,
 )
 
 
@@ -104,7 +104,7 @@ class TestFilterType4Bomb:
         assert [13, 13, 13, 13] in result
 
 
-class TestFilterType6_3_1:
+class TestFilterType6x3x1:
     """Test filter_type_6_3_1 function."""
 
     def test_filter_3_1(self):
@@ -119,7 +119,7 @@ class TestFilterType6_3_1:
         assert has_higher
 
 
-class TestFilterType7_3_2:
+class TestFilterType7x3x2:
     """Test filter_type_7_3_2 function."""
 
     def test_filter_3_2(self):
@@ -170,45 +170,36 @@ class TestFilterType10SerialTriple:
         assert [7, 7, 7, 8, 8, 8] in result
 
 
-class TestFilterType11Serial3_1:
+class TestFilterType11Serial3x1:
     """Test filter_type_11_serial_3_1 function."""
 
     def test_filter_serial_3_1(self):
         """Test filtering serial 3+1 combinations."""
-        moves = [
-            [5, 5, 5, 6, 6, 6, 3, 4],
-            [7, 7, 7, 8, 8, 8, 3, 4]
-        ]
+        moves = [[5, 5, 5, 6, 6, 6, 3, 4], [7, 7, 7, 8, 8, 8, 3, 4]]
         rival_move = [5, 5, 5, 6, 6, 6, 3, 4]
         result = filter_type_11_serial_3_1(moves, rival_move)
         assert [5, 5, 5, 6, 6, 6, 3, 4] not in result
         assert [7, 7, 7, 8, 8, 8, 3, 4] in result
 
 
-class TestFilterType12Serial3_2:
+class TestFilterType12Serial3x2:
     """Test filter_type_12_serial_3_2 function."""
 
     def test_filter_serial_3_2(self):
         """Test filtering serial 3+2 combinations."""
-        moves = [
-            [5, 5, 5, 6, 6, 6, 3, 3, 4, 4],
-            [7, 7, 7, 8, 8, 8, 3, 3, 4, 4]
-        ]
+        moves = [[5, 5, 5, 6, 6, 6, 3, 3, 4, 4], [7, 7, 7, 8, 8, 8, 3, 3, 4, 4]]
         rival_move = [5, 5, 5, 6, 6, 6, 3, 3, 4, 4]
         result = filter_type_12_serial_3_2(moves, rival_move)
         assert [5, 5, 5, 6, 6, 6, 3, 3, 4, 4] not in result
         assert [7, 7, 7, 8, 8, 8, 3, 3, 4, 4] in result
 
 
-class TestFilterType13_4_2:
+class TestFilterType13x4x2:
     """Test filter_type_13_4_2 function."""
 
     def test_filter_4_2(self):
         """Test filtering 4+2 combinations."""
-        moves = [
-            [7, 7, 7, 7, 3, 4],
-            [9, 9, 9, 9, 3, 4]
-        ]
+        moves = [[7, 7, 7, 7, 3, 4], [9, 9, 9, 9, 3, 4]]
         rival_move = [7, 7, 7, 7, 3, 4]
         result = filter_type_13_4_2(moves, rival_move)
         # Check results - rival should be filtered out, higher should be included
@@ -218,15 +209,12 @@ class TestFilterType13_4_2:
         assert has_higher
 
 
-class TestFilterType14_4_22:
+class TestFilterType14x4x22:
     """Test filter_type_14_4_22 function."""
 
     def test_filter_4_22(self):
         """Test filtering 4+22 combinations."""
-        moves = [
-            [7, 7, 7, 7, 3, 3, 4, 4],
-            [9, 9, 9, 9, 3, 3, 4, 4]
-        ]
+        moves = [[7, 7, 7, 7, 3, 3, 4, 4], [9, 9, 9, 9, 3, 3, 4, 4]]
         rival_move = [7, 7, 7, 7, 3, 3, 4, 4]
         result = filter_type_14_4_22(moves, rival_move)
         assert [7, 7, 7, 7, 3, 3, 4, 4] not in result

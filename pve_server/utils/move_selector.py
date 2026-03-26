@@ -28,6 +28,7 @@ def filter_type_4_bomb(moves, rival_move):
 
 # No need to filter for type_5_king_bomb
 
+
 def filter_type_6_3_1(moves, rival_move):
     rival_move.sort()
     rival_rank = rival_move[1]

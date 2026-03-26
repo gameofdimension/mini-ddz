@@ -33,8 +33,8 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-cov",
-    "black",
     "ruff",
+    "pre-commit",
 ]
 
 [project.scripts]
@@ -46,18 +46,52 @@ default-groups = []
 [tool.uv.pip]
 index-url = "https://pypi.org/simple"
 
-[tool.black]
-line-length = 100
-target-version = ["py39", "py310", "py311", "py312"]
-
 [tool.ruff]
-line-length = 100
-select = ["E", "F", "I", "W"]
-ignore = ["E501"]
+line-length = 120
+
+[tool.ruff.lint]
+# Match .flake8 select: B,C,E,F,N,P,T4,W,B9 (using ruff compatible subset)
+select = ["E", "F", "I", "W", "N", "B"]
+ignore = [
+    # from .flake8 (ruff compatible subset)
+    "E203", "E302", "E303", "E305", "E402", "E501", "E721", "E731", "E741",
+    "F405", "F821", "F841",
+    "C408",
+    "N803", "N806", "N812", "N817",
+    "B007", "B008",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+follow_imports = "skip"
+explicit_package_bases = true
+exclude = [
+    "tests/",
+    ".venv/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "onnxruntime.*",
+    "torch.*",
+    "onnx.*",
+    "flask.*",
+    "flask_cors.*",
+    "numpy.*",
+]
+ignore_errors = true
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["pve_server"]

@@ -22,14 +22,15 @@ class DoudizhuGameBoard extends React.Component {
     }
 
     computePlayerPortrait(playerId, playerIdx) {
-        if (this.props.playerInfo.length > 0) {
+        if (this.props.playerInfo.length > 0 && playerIdx >= 0 && playerIdx < this.props.playerInfo.length) {
+            const player = this.props.playerInfo[playerIdx];
             const chipTitle =
-                this.props.playerInfo[playerIdx].agentInfo && this.props.playerInfo[playerIdx].agentInfo.name
+                player && player.agentInfo && player.agentInfo.name
                     ? ''
                     : 'ID';
             const chipLabel =
-                this.props.playerInfo[playerIdx].agentInfo && this.props.playerInfo[playerIdx].agentInfo.name
-                    ? this.props.playerInfo[playerIdx].agentInfo.name
+                player && player.agentInfo && player.agentInfo.name
+                    ? player.agentInfo.name
                     : playerId;
             return this.props.playerInfo[playerIdx].role === 'landlord' ? (
                 <div>
