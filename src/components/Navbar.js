@@ -3,11 +3,12 @@ import AppBar from "@material-ui/core/AppBar";
 import ReplayIcon from "@material-ui/icons/Replay";
 import TranslateIcon from "@material-ui/icons/Translate";
 import SportsEsportsIcon from "@material-ui/icons/SportsEsports";
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 function Navbar() {
     const history = useHistory();
+    const location = useLocation();
     const { i18n } = useTranslation();
     const [locale, setLocale] = useState(localStorage.getItem('LOCALE') || 'en');
 
@@ -32,11 +33,11 @@ function Navbar() {
                     <div className={"title-text"}>Mini DDZ</div>
                 </div>
                 <div className={"stretch"} />
-                <div className="ai-battle-info" onClick={() => history.push('/ai-battle')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', transition: 'background-color 0.3s' }}>
+                <div className="ai-battle-info" onClick={() => history.push('/ai-battle')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/ai-battle' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
                     <div className="ai-battle-icon" style={{ marginRight: '5px' }}><SportsEsportsIcon /></div>
                     <div className="ai-battle-text" style={{ fontWeight: 'bold' }}>3 AI 对战</div>
                 </div>
-                <div className="replay-info" onClick={() => history.push('/replays')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+                <div className="replay-info" onClick={() => history.push('/replays')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/replays' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
                     <div className="replay-icon" style={{ marginRight: '5px' }}><ReplayIcon /></div>
                     <div className="replay-text">回放</div>
                 </div>
