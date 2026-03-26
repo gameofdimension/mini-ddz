@@ -549,7 +549,7 @@ class AIBattleView extends React.Component {
                                         playerInfo={this.state.gameInfo.playerInfo}
                                         hands={this.state.gameInfo.hands}
                                         latestAction={this.state.gameInfo.latestAction}
-                                        mainViewerId={this.state.gameInfo.mainViewerId}
+                                        mainPlayerId={this.state.gameInfo.mainViewerId}
                                         currentPlayer={this.state.gameInfo.currentPlayer}
                                         considerationTime={this.state.gameInfo.considerationTime}
                                         turn={this.state.gameInfo.turn}
@@ -557,6 +557,7 @@ class AIBattleView extends React.Component {
                                         toggleFade={this.state.gameInfo.toggleFade}
                                         gameStatus={this.state.gameInfo.gameStatus}
                                         gamePlayable={false}
+                                        showCardBack={false}
                                     />
                                 </Paper>
                             </div>
