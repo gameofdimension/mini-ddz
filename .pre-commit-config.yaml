@@ -13,12 +13,6 @@ repos:
         language: system
         types: [python]
         files: ^(pve_server|tests)/
-      - id: black
-        name: black
-        entry: uv run black
-        language: system
-        types: [python]
-        files: ^(pve_server|tests)/
       - id: mypy
         name: mypy
         entry: uv run mypy pve_server/
