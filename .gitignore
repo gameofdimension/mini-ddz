@@ -43,3 +43,4 @@ pytest.ini
 .coverage
 
 uv.lock
+screenshot/

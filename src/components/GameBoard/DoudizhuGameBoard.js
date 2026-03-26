@@ -181,7 +181,7 @@ class DoudizhuGameBoard extends React.Component {
                                     <li key={`handCard-${card}`}>
                                         <label
                                             className={`card ${
-                                                this.props.showCardBack ? 'back' : '' + rankClass + ' ' + suitClass
+                                                this.props.showCardBack ? 'back ' : `${rankClass} ${suitClass}`}
                                             }`}
                                         >
                                             <span className="rank">{rankText}</span>
@@ -202,7 +202,7 @@ class DoudizhuGameBoard extends React.Component {
                                     <li key={`handCard-${card}`}>
                                         <label
                                             className={`card ${
-                                                this.props.showCardBack ? 'back' : '' + rankClass + ' ' + suitClass
+                                                this.props.showCardBack ? 'back ' : `${rankClass} ${suitClass}`}
                                             }`}
                                         >
                                             <span className="rank">{rankText}</span>
