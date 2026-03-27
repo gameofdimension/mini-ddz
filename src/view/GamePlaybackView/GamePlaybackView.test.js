@@ -58,9 +58,13 @@ jest.mock('@material-ui/icons/ReplayRounded', () => () => <span>ReplayIcon</span
 jest.mock('@material-ui/icons/SkipNext', () => () => <span>SkipNext</span>);
 jest.mock('@material-ui/icons/SkipPrevious', () => () => <span>SkipPrev</span>);
 
-// Mock DoudizhuGameBoard
+// Mock DoudizhuGameBoard — capture props for timer tests
+let lastGameBoardProps = {};
 jest.mock('../../components/GameBoard', () => ({
-    DoudizhuGameBoard: () => <div data-testid="game-board">GameBoard</div>,
+    DoudizhuGameBoard: (props) => {
+        lastGameBoardProps = props;
+        return <div data-testid="game-board">GameBoard</div>;
+    },
 }));
 
 import GamePlaybackView from './GamePlaybackView';

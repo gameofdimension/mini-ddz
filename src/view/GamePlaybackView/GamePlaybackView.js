@@ -77,6 +77,7 @@ function GamePlaybackView({
     const gameStateHistoryRef = useRef([]);
     const gameSpeedRef = useRef(gameSpeed);
     const gameInfoRef = useRef(gameInfo);
+    const considerationTimeRef = useRef(initConsiderationTime);
     gameSpeedRef.current = gameSpeed;
     gameInfoRef.current = gameInfo;
 
@@ -85,6 +86,7 @@ function GamePlaybackView({
     const loadGameData = useCallback(() => {
         moveHistoryRef.current = [];
         gameStateHistoryRef.current = [];
+        considerationTimeRef.current = initConsiderationTime;
         if (gameStateTimeoutRef.current) {
             window.clearTimeout(gameStateTimeoutRef.current);
             gameStateTimeoutRef.current = null;
@@ -159,6 +161,16 @@ function GamePlaybackView({
         }
     }, [gameInfo.playerInfo.length]);
 
+    // Clear toggleFade after fade-in transition completes
+    useEffect(() => {
+        if (gameInfo.toggleFade === 'fade-in') {
+            const timeout = setTimeout(() => {
+                setGameInfo((prev) => ({ ...prev, toggleFade: '' }));
+            }, 200);
+            return () => clearTimeout(timeout);
+        }
+    }, [gameInfo.toggleFade]);
+
     // Auto-start on mount
     useEffect(() => {
         if (autoStart) {
@@ -224,6 +236,7 @@ function GamePlaybackView({
                     return newGameInfo;
                 }
                 newGameInfo.considerationTime = initConsiderationTime;
+                considerationTimeRef.current = initConsiderationTime;
                 newGameInfo.completedPercent += 100.0 / (moveHistoryRef.current.length - 1);
             } else {
                 Message({
@@ -257,10 +270,10 @@ function GamePlaybackView({
             gameStateTimeoutRef.current = null;
         }
         gameStateTimeoutRef.current = setTimeout(() => {
-            const currentConsiderationTime = gameInfoRef.current.considerationTime;
-            if (currentConsiderationTime > 0) {
-                let newTime = currentConsiderationTime - considerationTimeDeduction * Math.pow(2, gameSpeedRef.current);
+            if (considerationTimeRef.current > 0) {
+                let newTime = considerationTimeRef.current - considerationTimeDeduction * Math.pow(2, gameSpeedRef.current);
                 newTime = newTime < 0 ? 0 : newTime;
+                considerationTimeRef.current = newTime;
                 if (newTime === 0 && gameSpeedRef.current < 2) {
                     setGameInfo((prev) => ({ ...prev, toggleFade: 'fade-out' }));
                 }
@@ -273,13 +286,7 @@ function GamePlaybackView({
                 if (gameInfoRef.current.toggleFade === 'fade-out') {
                     newGameInfo.toggleFade = 'fade-in';
                 }
-                setGameInfo(newGameInfo, () => {
-                    if (gameInfoRef.current.toggleFade !== '') {
-                        setTimeout(() => {
-                            setGameInfo((prev) => ({ ...prev, toggleFade: '' }));
-                        }, 200);
-                    }
-                });
+                setGameInfo(newGameInfo);
             }
         }, considerationTimeDeduction);
     }, [generateNewState]);
