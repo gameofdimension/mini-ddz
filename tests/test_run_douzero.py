@@ -10,6 +10,14 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
+_pretrained_dir = os.path.join(os.path.dirname(__file__), "..", "pve_server", "pretrained", "douzero_pretrained")
+_model_available = os.path.isfile(os.path.join(_pretrained_dir, "landlord.ckpt"))
+
+pytestmark = pytest.mark.skipif(
+    not _model_available,
+    reason="pretrained model files not available (gitignored)",
+)
+
 # Import after path setup
 from run_douzero import (
     Card2Suit,
