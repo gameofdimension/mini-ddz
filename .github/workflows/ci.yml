@@ -40,6 +40,6 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: ESLint
-        run: npx eslint src/
+        run: npx react-scripts lint
       - name: Test
         run: npm test -- --watchAll=false
