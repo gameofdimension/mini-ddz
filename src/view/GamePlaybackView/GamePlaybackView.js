@@ -75,6 +75,8 @@ function GamePlaybackView({
     const gameStateTimeoutRef = useRef(null);
     const moveHistoryRef = useRef([]);
     const gameStateHistoryRef = useRef([]);
+    const gameSpeedRef = useRef(gameSpeed);
+    gameSpeedRef.current = gameSpeed;
 
     // --- Data loading ---
 
@@ -245,11 +247,12 @@ function GamePlaybackView({
     const gameStateTimer = useCallback(() => {
         gameStateTimeoutRef.current = setTimeout(() => {
             setGameInfo((prev) => {
+                if (prev.gameStatus !== 'playing') return prev;
                 let currentConsiderationTime = prev.considerationTime;
                 if (currentConsiderationTime > 0) {
-                    currentConsiderationTime -= considerationTimeDeduction * Math.pow(2, gameSpeed);
+                    currentConsiderationTime -= considerationTimeDeduction * Math.pow(2, gameSpeedRef.current);
                     currentConsiderationTime = currentConsiderationTime < 0 ? 0 : currentConsiderationTime;
-                    if (currentConsiderationTime === 0 && gameSpeed < 2) {
+                    if (currentConsiderationTime === 0 && gameSpeedRef.current < 2) {
                         return { ...prev, considerationTime: currentConsiderationTime, toggleFade: 'fade-out' };
                     }
                     return { ...prev, considerationTime: currentConsiderationTime };
@@ -257,9 +260,10 @@ function GamePlaybackView({
                 return prev;
             });
 
-            // We use a separate effect to react to considerationTime reaching 0
+            // Reschedule next tick
+            gameStateTimer();
         }, considerationTimeDeduction);
-    }, [gameSpeed]);
+    }, []);
 
     // Trigger new state when considerationTime reaches 0
     useEffect(() => {
