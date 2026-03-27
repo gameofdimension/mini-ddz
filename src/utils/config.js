@@ -1,4 +1,3 @@
-const apiUrl = 'http://127.0.0.1:8000';
 const douzeroDemoUrl = 'http://127.0.0.1:5050';
 
-export { apiUrl, douzeroDemoUrl };
+export { douzeroDemoUrl };
