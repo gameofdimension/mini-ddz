@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python Lint & Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync
+      - name: Ruff check
+        run: uv run ruff check pve_server/ tests/
+      - name: Ruff format check
+        run: uv run ruff format --check pve_server/ tests/
+      - name: Mypy
+        run: uv run mypy pve_server/
+      - name: Pytest
+        run: uv run pytest
+
+  frontend:
+    name: Frontend Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: ESLint
+        run: npx eslint src/
+      - name: Test
+        run: npm test -- --watchAll=false
