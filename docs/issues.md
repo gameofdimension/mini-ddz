@@ -18,19 +18,19 @@
 
 ## 无用代码
 
-### 2. socket.io-client 未使用依赖
+### ~~2. socket.io-client 未使用依赖~~ ✅ 已修复
 
 - **文件**：`package.json`
 - **描述**：`socket.io-client@4.7.0` 已声明为运行时依赖，但项目中没有任何代码 import 或使用它。
 - **优先级**：低
-- **修复方案**：执行 `npm uninstall socket.io-client`。
+- **修复方案**：从 `package.json` 中移除该依赖。
 
-### 3. config.js 未使用变量
+### ~~3. config.js 未使用变量~~ ✅ 已修复
 
 - **文件**：`src/utils/config.js`
 - **描述**：`apiUrl`（`http://127.0.0.1:8000`）已导出但从未被引用。
 - **优先级**：低
-- **修复方案**：移除该变量。
+- **修复方案**：移除该变量及对应测试。
 
 ---
 
@@ -85,13 +85,11 @@
 
 ## 工程化 / DevOps
 
-### 9. 缺少 CI/CD 流水线
+### ~~9. 缺少 CI/CD 流水线~~ ✅ 已修复
 
 - **描述**：项目无任何自动化 CI/CD 配置（无 GitHub Actions、无 Docker、无部署脚本）。
 - **优先级**：中
-- **修复方案**：
-  - 添加 `.github/workflows/ci.yml`，包含 ruff check、ruff format、mypy、npm test、pytest
-  - 可选：添加 Dockerfile 简化部署
+- **修复方案**：添加 `.github/workflows/ci.yml`，包含 ruff check、ruff format、mypy、npm test、pytest（Python 3.11/3.12）。
 
 ## 优先级汇总
 
@@ -101,7 +99,4 @@
 | 中 | #5 | i18n 缺失 |
 | 中 | #6 | PvEView 模块级可变状态 |
 | 中 | #7 | AIBattleView / ReplayView 重复 |
-| 中 | #9 | 缺少 CI/CD |
-| 低 | #2 | socket.io-client 未使用 |
-| 低 | #3 | apiUrl 未使用 |
 | 低 | #8 | 组件风格不统一 |
