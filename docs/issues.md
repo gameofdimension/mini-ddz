@@ -93,17 +93,6 @@
   - 添加 `.github/workflows/ci.yml`，包含 ruff check、ruff format、mypy、npm test、pytest
   - 可选：添加 Dockerfile 简化部署
 
-### 10. 预训练模型文件提交在 Git 中
-
-- **文件**：`pve_server/pretrained/`（约 36MB）
-- **描述**：`.ckpt`、`.onnx`、`.pth` 等大文件直接提交在 Git 仓库中，影响克隆速度和仓库体积。
-- **优先级**：中
-- **修复方案**：
-  - 方案 A：使用 Git LFS 管理模型文件
-  - 方案 B：在 `.gitignore` 中排除模型文件，首次运行时通过下载脚本获取
-
----
-
 ## 优先级汇总
 
 | 优先级 | 编号 | 问题 |
@@ -114,7 +103,6 @@
 | 中 | #6 | PvEView 模块级可变状态 |
 | 中 | #7 | AIBattleView / ReplayView 重复 |
 | 中 | #9 | 缺少 CI/CD |
-| 中 | #10 | 模型文件过大 |
 | 低 | #2 | socket.io-client 未使用 |
 | 低 | #3 | apiUrl 未使用 |
 | 低 | #8 | 组件风格不统一 |
