@@ -24,13 +24,13 @@ type: feedback
 
 **How to apply:** Use `git push` to push code. User will create PRs manually via GitHub web UI.
 
-## No auto push
+## Push policy
 
-**Rule:** Never push to remote without being asked.
+**Rule:** "create a PR" implies authorization to push the branch to remote, since push is a necessary prerequisite for manual PR creation via GitHub web UI. Do not push in other contexts without explicit request.
 
-**Why:** User wants to control when code is pushed and prefers a clean commit history per logical change.
+**Why:** User wants to control when code is pushed and prefers a clean commit history per logical change. But asking to "create a PR" logically requires the branch to be on remote, and `gh` CLI is unavailable.
 
-**How to apply:** Only push when the user explicitly requests it (e.g., "push", "create PR").
+**How to apply:** When user says "create a PR" or "commit and create a PR", push the branch to remote after committing. For other scenarios, only push when explicitly asked (e.g., "push").
 
 ## No Co-Authored-By in commits
 
@@ -47,3 +47,11 @@ type: feedback
 **Why:** User prefers a clean commit history per logical change — each commit should be a distinct, immutable record.
 
 **How to apply:** For any follow-up fix, even small ones on the same branch, create a new commit instead of amending.
+
+## Hooks use stdin JSON
+
+**Rule:** Claude Code hooks receive tool input as JSON on stdin, not as shell variables like `${file}`.
+
+**Why:** A previous hook used `${file}` to get the edited file path, but this variable is never set by Claude Code, so the hook silently did nothing.
+
+**How to apply:** Always use `jq -r '.tool_input.file_path'` to extract file paths from stdin in hook scripts.
