@@ -14,7 +14,7 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import axios from 'axios';
 import { Layout, Message } from 'element-react';
 import qs from 'query-string';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
@@ -22,50 +22,17 @@ import {
     card2SuiteAndRank,
     computeHandCardsWidth,
     deepCopy,
-    fullDoudizhuDeck,
     isDoudizhuBomb,
     prepareReplayInitHands,
-    shuffleArray,
     sortDoudizhuCards,
     translateCardData,
 } from '../../utils';
 import { douzeroDemoUrl } from '../../utils/config';
-
-let shuffledDoudizhuDeck = shuffleArray(fullDoudizhuDeck.slice());
-
-let threeLandlordCards = shuffleArray(sortDoudizhuCards(shuffledDoudizhuDeck.slice(0, 3)));
-let originalThreeLandlordCards = threeLandlordCards.slice();
+import { createInitialGameData } from '../../utils/gameData';
 
 const initConsiderationTime = 30000;
 const considerationTimeDeduction = 1000;
 const mainPlayerId = 0; // index of main player (for the sake of simplify code logic)
-let playerInfo = [];
-
-let initHands = [
-    shuffledDoudizhuDeck.slice(3, 20),
-    shuffledDoudizhuDeck.slice(20, 37),
-    shuffledDoudizhuDeck.slice(37, 54),
-];
-let replayInitHands = null; // Store original hands for replay
-
-console.log('init hands', initHands);
-console.log('three landlord card', threeLandlordCards);
-
-let gameStateTimeout = null;
-
-let gameHistory = [];
-let bombNum = 0;
-let lastMoveLandlord = [];
-let lastMoveLandlordDown = [];
-let lastMoveLandlordUp = [];
-let playedCardsLandlord = [];
-let playedCardsLandlordDown = [];
-let playedCardsLandlordUp = [];
-let legalActions = { turn: -1, actions: [] };
-let hintIdx = -1;
-let gameEndDialogTitle = '';
-let syncGameStatus = localStorage.getItem('LOCALE') ? 'ready' : 'localeSelection';
-let moveHistory = []; // For replay recording
 
 // Save replay to backend
 const saveReplayToBackend = async (replayData) => {
@@ -83,11 +50,26 @@ const saveReplayToBackend = async (replayData) => {
 
 function PvEDoudizhuDemoView() {
     const { t } = useTranslation();
+
+    // Lazy-initialized ref holding all game data (replaces module-level mutable state)
+    const gameDataRef = useRef(null);
+    if (gameDataRef.current === null) {
+        gameDataRef.current = createInitialGameData();
+    }
+    const gd = gameDataRef.current;
+
+    // Timer ref (replaces module-level gameStateTimeout)
+    const gameStateTimeoutRef = useRef(null);
+
+    // Mirror gameStatus in a ref so setTimeout callbacks always read the latest value
+    const [gameStatus, setGameStatus] = useState(localStorage.getItem('LOCALE') ? 'ready' : 'localeSelection'); // "localeSelection", "ready", "playing", "paused", "over"
+    const gameStatusRef = useRef(gameStatus);
+    gameStatusRef.current = gameStatus;
+
     const [apiPlayDelay, setApiPlayDelay] = useState(3000);
     const [isGameEndDialogOpen, setIsGameEndDialogOpen] = useState(false);
     const [considerationTime, setConsiderationTime] = useState(initConsiderationTime);
     const [toggleFade, setToggleFade] = useState('');
-    const [gameStatus, setGameStatus] = useState(localStorage.getItem('LOCALE') ? 'ready' : 'localeSelection'); // "localeSelection", "ready", "playing", "paused", "over"
     const [gameState, setGameState] = useState({
         hands: [[], [], []],
         latestAction: [[], [], []],
@@ -118,7 +100,7 @@ function PvEDoudizhuDemoView() {
 
     const proceedNextTurn = async (playingCard, rankOnly = true) => {
         // take played three landlord card out
-        if (playerInfo[gameState.currentPlayer].role === 'landlord' && threeLandlordCards.length > 0) {
+        if (gd.playerInfo[gameState.currentPlayer].role === 'landlord' && gd.threeLandlordCards.length > 0) {
             let playingCardCopy;
             if (rankOnly) playingCardCopy = playingCard.slice();
             else
@@ -126,7 +108,7 @@ function PvEDoudizhuDemoView() {
                     const { rank } = card2SuiteAndRank(card);
                     return rank;
                 });
-            threeLandlordCards = threeLandlordCards.filter((card) => {
+            gd.threeLandlordCards = gd.threeLandlordCards.filter((card) => {
                 const { rank } = card2SuiteAndRank(card);
                 const idx = playingCardCopy.indexOf(rank);
                 if (idx >= 0) {
@@ -138,11 +120,11 @@ function PvEDoudizhuDemoView() {
 
         // if next player is user, get legal actions
         if ((gameState.currentPlayer + 1) % 3 === mainPlayerId) {
-            hintIdx = -1;
+            gd.hintIdx = -1;
             const player_hand_cards = cardArr2DouzeroFormat(gameState.hands[mainPlayerId].slice().reverse());
             let rival_move = '';
             if (playingCard.length === 0) {
-                rival_move = cardArr2DouzeroFormat(sortDoudizhuCards(gameHistory[gameHistory.length - 1], true));
+                rival_move = cardArr2DouzeroFormat(sortDoudizhuCards(gd.gameHistory[gd.gameHistory.length - 1], true));
             } else {
                 rival_move = rankOnly ? playingCard.join('') : cardArr2DouzeroFormat(playingCard);
             }
@@ -152,12 +134,12 @@ function PvEDoudizhuDemoView() {
             };
             const apiRes = await axios.post(`${douzeroDemoUrl}/legal`, qs.stringify(requestBody));
             const data = apiRes.data;
-            legalActions = {
+            gd.legalActions = {
                 turn: gameState.turn + 1,
                 actions: data.legal_action.split(','),
             };
             setIsHintDisabled(data.legal_action === '');
-            setIsPassDisabled(playingCard.length === 0 && gameHistory[gameHistory.length - 1].length === 0);
+            setIsPassDisabled(playingCard.length === 0 && gd.gameHistory[gd.gameHistory.length - 1].length === 0);
         }
 
         // delay play for api player
@@ -205,24 +187,24 @@ function PvEDoudizhuDemoView() {
 
         // update value records for douzero
         const newHistoryRecord = sortDoudizhuCards(newLatestAction === 'pass' ? [] : newLatestAction, true);
-        switch (playerInfo[gameState.currentPlayer].douzeroPlayerPosition) {
+        switch (gd.playerInfo[gameState.currentPlayer].douzeroPlayerPosition) {
             case 0:
-                lastMoveLandlord = newHistoryRecord;
-                playedCardsLandlord = playedCardsLandlord.concat(newHistoryRecord);
+                gd.lastMoveLandlord = newHistoryRecord;
+                gd.playedCardsLandlord = gd.playedCardsLandlord.concat(newHistoryRecord);
                 break;
             case 1:
-                lastMoveLandlordDown = newHistoryRecord;
-                playedCardsLandlordDown = playedCardsLandlordDown.concat(newHistoryRecord);
+                gd.lastMoveLandlordDown = newHistoryRecord;
+                gd.playedCardsLandlordDown = gd.playedCardsLandlordDown.concat(newHistoryRecord);
                 break;
             case 2:
-                lastMoveLandlordUp = newHistoryRecord;
-                playedCardsLandlordUp = playedCardsLandlordUp.concat(newHistoryRecord);
+                gd.lastMoveLandlordUp = newHistoryRecord;
+                gd.playedCardsLandlordUp = gd.playedCardsLandlordUp.concat(newHistoryRecord);
                 break;
             default:
                 break;
         }
-        gameHistory.push(newHistoryRecord);
-        if (isDoudizhuBomb(newHistoryRecord)) bombNum++;
+        gd.gameHistory.push(newHistoryRecord);
+        if (isDoudizhuBomb(newHistoryRecord)) gd.bombNum++;
 
         // Record move for replay
         const moveRecord = {
@@ -230,7 +212,7 @@ function PvEDoudizhuDemoView() {
             move: newLatestAction === 'pass' ? 'pass' : newLatestAction.join(' '),
             info: {}
         };
-        moveHistory.push(moveRecord);
+        gd.moveHistory.push(moveRecord);
 
         newGameState.latestAction[gameState.currentPlayer] = newLatestAction;
         newGameState.hands[gameState.currentPlayer] = newHand;
@@ -238,7 +220,6 @@ function PvEDoudizhuDemoView() {
         newGameState.turn++;
         if (newHand.length === 0) {
             setGameStatus('over');
-            syncGameStatus = 'over';
         }
         setGameState(newGameState);
         setToggleFade('fade-in');
@@ -246,13 +227,13 @@ function PvEDoudizhuDemoView() {
             setToggleFade('');
         }, 200);
 
-        if (gameStateTimeout) {
-            clearTimeout(gameStateTimeout);
+        if (gameStateTimeoutRef.current) {
+            clearTimeout(gameStateTimeoutRef.current);
         }
 
         if (newHand.length === 0) {
             setHideRivalHand(false);
-            const winner = playerInfo[gameState.currentPlayer];
+            const winner = gd.playerInfo[gameState.currentPlayer];
 
             // update game overall history
             const gameStatistics = localStorage.getItem('GAME_STATISTICS')
@@ -269,24 +250,24 @@ function PvEDoudizhuDemoView() {
                   };
 
             gameStatistics.totalGameNum += 1;
-            switch (playerInfo[mainPlayerId].douzeroPlayerPosition) {
+            switch (gd.playerInfo[mainPlayerId].douzeroPlayerPosition) {
                 case 0:
                     gameStatistics.landlordGameNum += 1;
-                    if (winner.role === playerInfo[mainPlayerId].role) {
+                    if (winner.role === gd.playerInfo[mainPlayerId].role) {
                         gameStatistics.totalWinNum += 1;
                         gameStatistics.landlordWinNum += 1;
                     }
                     break;
                 case 1:
                     gameStatistics.landlordDownGameNum += 1;
-                    if (winner.role === playerInfo[mainPlayerId].role) {
+                    if (winner.role === gd.playerInfo[mainPlayerId].role) {
                         gameStatistics.totalWinNum += 1;
                         gameStatistics.landlordDownWinNum += 1;
                     }
                     break;
                 case 2:
                     gameStatistics.landlordUpGameNum += 1;
-                    if (winner.role === playerInfo[mainPlayerId].role) {
+                    if (winner.role === gd.playerInfo[mainPlayerId].role) {
                         gameStatistics.totalWinNum += 1;
                         gameStatistics.landlordUpWinNum += 1;
                     }
@@ -301,7 +282,7 @@ function PvEDoudizhuDemoView() {
             localStorage.setItem('GAME_STATISTICS', JSON.stringify(gameStatistics));
 
             setTimeout(() => {
-                gameEndDialogTitle =
+                gd.gameEndDialogTitle =
                     winner.role === 'peasant' ? t('doudizhu.peasants_win') : t('doudizhu.landlord_win');
                 setStatisticRows([
                     {
@@ -345,14 +326,14 @@ function PvEDoudizhuDemoView() {
 
                 // Save replay to backend
                 const replayData = {
-                    playerInfo: playerInfo.map(p => ({
+                    playerInfo: gd.playerInfo.map(p => ({
                         id: p.id,
                         index: p.index,
                         role: p.role,
                         agentInfo: p.agentInfo || { name: p.index === mainPlayerId ? 'Player' : 'DouZero' }
                     })),
-                    initHands: (replayInitHands || initHands).map(hand => hand.join(' ')),
-                    moveHistory: moveHistory,
+                    initHands: (gd.replayInitHands || gd.initHands).map(hand => hand.join(' ')),
+                    moveHistory: gd.moveHistory,
                     source: 'pve'
                 };
                 saveReplayToBackend(replayData);
@@ -366,16 +347,16 @@ function PvEDoudizhuDemoView() {
 
     const requestApiPlay = async () => {
         // gather information for api request
-        const player_position = playerInfo[gameState.currentPlayer].douzeroPlayerPosition;
+        const player_position = gd.playerInfo[gameState.currentPlayer].douzeroPlayerPosition;
         const player_hand_cards = cardArr2DouzeroFormat(gameState.hands[gameState.currentPlayer].slice().reverse());
         const num_cards_left_landlord =
-            gameState.hands[playerInfo.find((player) => player.douzeroPlayerPosition === 0).index].length;
+            gameState.hands[gd.playerInfo.find((player) => player.douzeroPlayerPosition === 0).index].length;
         const num_cards_left_landlord_down =
-            gameState.hands[playerInfo.find((player) => player.douzeroPlayerPosition === 1).index].length;
+            gameState.hands[gd.playerInfo.find((player) => player.douzeroPlayerPosition === 1).index].length;
         const num_cards_left_landlord_up =
-            gameState.hands[playerInfo.find((player) => player.douzeroPlayerPosition === 2).index].length;
-        const three_landlord_cards = cardArr2DouzeroFormat(threeLandlordCards.slice().reverse());
-        const card_play_action_seq = gameHistory
+            gameState.hands[gd.playerInfo.find((player) => player.douzeroPlayerPosition === 2).index].length;
+        const three_landlord_cards = cardArr2DouzeroFormat(gd.threeLandlordCards.slice().reverse());
+        const card_play_action_seq = gd.gameHistory
             .map((cards) => {
                 return cardArr2DouzeroFormat(cards);
             })
@@ -388,13 +369,13 @@ function PvEDoudizhuDemoView() {
                 true,
             ),
         );
-        const last_move_landlord = cardArr2DouzeroFormat(lastMoveLandlord.slice().reverse());
-        const last_move_landlord_down = cardArr2DouzeroFormat(lastMoveLandlordDown.slice().reverse());
-        const last_move_landlord_up = cardArr2DouzeroFormat(lastMoveLandlordUp.slice().reverse());
-        const bomb_num = bombNum;
-        const played_cards_landlord = cardArr2DouzeroFormat(playedCardsLandlord);
-        const played_cards_landlord_down = cardArr2DouzeroFormat(playedCardsLandlordDown);
-        const played_cards_landlord_up = cardArr2DouzeroFormat(playedCardsLandlordUp);
+        const last_move_landlord = cardArr2DouzeroFormat(gd.lastMoveLandlord.slice().reverse());
+        const last_move_landlord_down = cardArr2DouzeroFormat(gd.lastMoveLandlordDown.slice().reverse());
+        const last_move_landlord_up = cardArr2DouzeroFormat(gd.lastMoveLandlordUp.slice().reverse());
+        const bomb_num = gd.bombNum;
+        const played_cards_landlord = cardArr2DouzeroFormat(gd.playedCardsLandlord);
+        const played_cards_landlord_down = cardArr2DouzeroFormat(gd.playedCardsLandlordDown);
+        const played_cards_landlord_up = cardArr2DouzeroFormat(gd.playedCardsLandlordUp);
 
         const requestBody = {
             player_position,
@@ -425,13 +406,13 @@ function PvEDoudizhuDemoView() {
                         gameState.hands[gameState.currentPlayer].slice().reverse(),
                     );
                     let rival_move = '';
-                    if (gameHistory[gameHistory.length - 1].length > 0) {
+                    if (gd.gameHistory[gd.gameHistory.length - 1].length > 0) {
                         rival_move = cardArr2DouzeroFormat(
-                            sortDoudizhuCards(gameHistory[gameHistory.length - 1], true),
+                            sortDoudizhuCards(gd.gameHistory[gd.gameHistory.length - 1], true),
                         );
-                    } else if (gameHistory.length >= 2 && gameHistory[gameHistory.length - 2].length > 0) {
+                    } else if (gd.gameHistory.length >= 2 && gd.gameHistory[gd.gameHistory.length - 2].length > 0) {
                         rival_move = cardArr2DouzeroFormat(
-                            sortDoudizhuCards(gameHistory[gameHistory.length - 2], true),
+                            sortDoudizhuCards(gd.gameHistory[gd.gameHistory.length - 2], true),
                         );
                     }
                     const requestBody = {
@@ -540,34 +521,33 @@ function PvEDoudizhuDemoView() {
         ];
         switch (role) {
             case 'landlord_up':
-                playerInfo = deepCopy(playerInfoTemplate);
-                playerInfo[1].role = 'landlord';
+                gd.playerInfo = deepCopy(playerInfoTemplate);
+                gd.playerInfo[1].role = 'landlord';
                 break;
             case 'landlord':
-                playerInfo = deepCopy(playerInfoTemplate);
-                playerInfo[0].role = 'landlord';
+                gd.playerInfo = deepCopy(playerInfoTemplate);
+                gd.playerInfo[0].role = 'landlord';
                 break;
             case 'landlord_down':
-                playerInfo = deepCopy(playerInfoTemplate);
-                playerInfo[2].role = 'landlord';
+                gd.playerInfo = deepCopy(playerInfoTemplate);
+                gd.playerInfo[2].role = 'landlord';
                 break;
             default:
                 break;
         }
-        const landlordIdx = playerInfo.find((player) => player.role === 'landlord').index;
-        playerInfo[landlordIdx].douzeroPlayerPosition = 0;
-        playerInfo[(landlordIdx + 1) % 3].douzeroPlayerPosition = 1;
-        playerInfo[(landlordIdx + 2) % 3].douzeroPlayerPosition = 2;
+        const landlordIdx = gd.playerInfo.find((player) => player.role === 'landlord').index;
+        gd.playerInfo[landlordIdx].douzeroPlayerPosition = 0;
+        gd.playerInfo[(landlordIdx + 1) % 3].douzeroPlayerPosition = 1;
+        gd.playerInfo[(landlordIdx + 2) % 3].douzeroPlayerPosition = 2;
         // Prepare replay init hands (landlord with 20 cards)
-        replayInitHands = prepareReplayInitHands(initHands, threeLandlordCards, landlordIdx);
+        gd.replayInitHands = prepareReplayInitHands(gd.initHands, gd.threeLandlordCards, landlordIdx);
         // Add landlord cards to game state
-        initHands[landlordIdx] = initHands[landlordIdx].concat(threeLandlordCards.slice());
+        gd.initHands[landlordIdx] = gd.initHands[landlordIdx].concat(gd.threeLandlordCards.slice());
         setGameStatus('playing');
-        syncGameStatus = 'playing';
     };
 
     const gameStateTimer = () => {
-        gameStateTimeout = setTimeout(() => {
+        gameStateTimeoutRef.current = setTimeout(() => {
             let currentConsiderationTime = considerationTime;
             if (currentConsiderationTime > 0) {
                 currentConsiderationTime -= considerationTimeDeduction;
@@ -576,10 +556,10 @@ function PvEDoudizhuDemoView() {
             } else {
                 // consideration time used up for current player
                 // if current player is controlled by user, auto play or pass
-                if (gameState.currentPlayer === mainPlayerId && syncGameStatus === 'playing') {
-                    if (legalActions.turn === gameState.turn && legalActions.actions.length > 0) {
+                if (gameState.currentPlayer === mainPlayerId && gameStatusRef.current === 'playing') {
+                    if (gd.legalActions.turn === gameState.turn && gd.legalActions.actions.length > 0) {
                         // Auto play the first legal action
-                        const autoPlayRanks = legalActions.actions[0].split('');
+                        const autoPlayRanks = gd.legalActions.actions[0].split('');
                         let autoPlayCards = [];
                         gameState.hands[mainPlayerId].forEach((card) => {
                             const { rank } = card2SuiteAndRank(card);
@@ -633,32 +613,11 @@ function PvEDoudizhuDemoView() {
     };
 
     const handleCloseGameEndDialog = () => {
-        // reset all game state for new game
-        shuffledDoudizhuDeck = shuffleArray(fullDoudizhuDeck.slice());
+        // reset all game data for new game
+        const fresh = createInitialGameData();
+        Object.assign(gd, fresh);
 
-        threeLandlordCards = shuffleArray(sortDoudizhuCards(shuffledDoudizhuDeck.slice(0, 3)));
-        originalThreeLandlordCards = threeLandlordCards.slice();
-
-        initHands = [
-            shuffledDoudizhuDeck.slice(3, 20),
-            shuffledDoudizhuDeck.slice(20, 37),
-            shuffledDoudizhuDeck.slice(37, 54),
-        ];
-        replayInitHands = null;
-
-        playerInfo = [];
-
-        gameStateTimeout = null;
-        gameHistory = [];
-        moveHistory = [];
-        bombNum = 0;
-        lastMoveLandlord = [];
-        lastMoveLandlordDown = [];
-        lastMoveLandlordUp = [];
-        playedCardsLandlord = [];
-        playedCardsLandlordDown = [];
-        playedCardsLandlordUp = [];
-        legalActions = { turn: -1, actions: [] };
+        gameStateTimeoutRef.current = null;
 
         setConsiderationTime(initConsiderationTime);
         setToggleFade('');
@@ -675,18 +634,16 @@ function PvEDoudizhuDemoView() {
         setHideRivalHand(hidePredictionArea);
 
         setGameStatus('ready');
-        syncGameStatus = 'ready';
         setIsGameEndDialogOpen(false);
     };
 
     const startGame = async () => {
         // start game
         setGameStatus('playing');
-        syncGameStatus = 'playing';
         const newGameState = deepCopy(gameState);
         // find landord to be the first player
-        newGameState.currentPlayer = playerInfo.find((element) => element.role === 'landlord').index;
-        newGameState.hands = initHands.map((element) => sortDoudizhuCards(element));
+        newGameState.currentPlayer = gd.playerInfo.find((element) => element.role === 'landlord').index;
+        newGameState.hands = gd.initHands.map((element) => sortDoudizhuCards(element));
 
         // if first player is user, fetch legal actions
         if (newGameState.currentPlayer === mainPlayerId) {
@@ -698,7 +655,7 @@ function PvEDoudizhuDemoView() {
             };
             const apiRes = await axios.post(`${douzeroDemoUrl}/legal`, qs.stringify(requestBody));
             const data = apiRes.data;
-            legalActions = {
+            gd.legalActions = {
                 turn: 0,
                 actions: data.legal_action.split(','),
             };
@@ -711,12 +668,12 @@ function PvEDoudizhuDemoView() {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
-        if (syncGameStatus === 'playing') gameStateTimer();
+        if (gameStatusRef.current === 'playing') gameStateTimer();
     }, [considerationTime]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
-        if (gameState.currentPlayer !== null && syncGameStatus === 'playing') {
+        if (gameState.currentPlayer !== null && gameStatusRef.current === 'playing') {
             // if current player is not user, request for API player
             if (gameState.currentPlayer !== mainPlayerId) {
                 requestApiPlay();
@@ -735,9 +692,9 @@ function PvEDoudizhuDemoView() {
         switch (type) {
             case 'play': {
                 // check if cards to play is in legal action list
-                if (gameState.turn === legalActions.turn) {
+                if (gameState.turn === gd.legalActions.turn) {
                     if (
-                        legalActions.actions.indexOf(cardArr2DouzeroFormat(sortDoudizhuCards(selectedCards, true))) >= 0
+                        gd.legalActions.actions.indexOf(cardArr2DouzeroFormat(sortDoudizhuCards(selectedCards, true))) >= 0
                     ) {
                         proceedNextTurn(selectedCards, false);
                     } else {
@@ -767,13 +724,13 @@ function PvEDoudizhuDemoView() {
                 break;
             }
             case 'hint': {
-                if (gameState.turn === legalActions.turn) {
+                if (gameState.turn === gd.legalActions.turn) {
                     setSelectedCards([]);
-                    hintIdx++;
-                    if (hintIdx >= legalActions.actions.length) {
-                        hintIdx = 0;
+                    gd.hintIdx++;
+                    if (gd.hintIdx >= gd.legalActions.actions.length) {
+                        gd.hintIdx = 0;
                     }
-                    const hintRanks = legalActions.actions[hintIdx].split('');
+                    const hintRanks = gd.legalActions.actions[gd.hintIdx].split('');
                     let hintCards = [];
                     gameState.hands[gameState.currentPlayer].forEach((card) => {
                         const { rank } = card2SuiteAndRank(card);
@@ -947,7 +904,7 @@ function PvEDoudizhuDemoView() {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title" style={{ width: '200px' }}>
-                    {gameEndDialogTitle}
+                    {gd.gameEndDialogTitle}
                 </DialogTitle>
                 <DialogContent>
                     <TableContainer className="doudizhu-statistic-table" component={Paper}>
@@ -999,7 +956,7 @@ function PvEDoudizhuDemoView() {
                                     isPassDisabled={isPassDisabled}
                                     isHintDisabled={isHintDisabled}
                                     gamePlayable={true}
-                                    playerInfo={playerInfo}
+                                    playerInfo={gd.playerInfo}
                                     hands={gameState.hands}
                                     selectedCards={selectedCards}
                                     handleSelectedCards={handleSelectedCards}
@@ -1017,13 +974,13 @@ function PvEDoudizhuDemoView() {
                     </Layout.Col>
                     <Layout.Col span="7" style={{ height: '100%' }}>
                         <Paper className={'doudizhu-probability-paper'} elevation={3}>
-                            {playerInfo.length > 0 && gameState.currentPlayer !== null ? (
+                            {gd.playerInfo.length > 0 && gameState.currentPlayer !== null ? (
                                 <div style={{ padding: '16px' }}>
                                     <span style={{ textAlign: 'center', marginBottom: '8px', display: 'block' }}>
                                         {t('doudizhu.three_landlord_cards')}
                                     </span>
                                     <div className="playingCards" style={{ display: 'flex', justifyContent: 'center' }}>
-                                        {sortDoudizhuCards(originalThreeLandlordCards, true).map((card) => {
+                                        {sortDoudizhuCards(gd.originalThreeLandlordCards, true).map((card) => {
                                             const [rankClass, suitClass, rankText, suitText] = translateCardData(card);
                                             return (
                                                 <div
@@ -1053,12 +1010,12 @@ function PvEDoudizhuDemoView() {
                             )}
                             <Divider />
                             <div className={'probability-player'} style={{ height: '19px', textAlign: 'center' }}>
-                                {playerInfo.length > 0 && gameState.currentPlayer !== null ? (
+                                {gd.playerInfo.length > 0 && gameState.currentPlayer !== null ? (
                                     <span>
                                         {t(
                                             `doudizhu.${
                                                 ['landlord', 'landlord_down', 'landlord_up'][
-                                                    playerInfo[gameState.currentPlayer].douzeroPlayerPosition
+                                                    gd.playerInfo[gameState.currentPlayer].douzeroPlayerPosition
                                                 ]
                                             }`,
                                         )}
