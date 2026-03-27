@@ -11,8 +11,6 @@ class LandlordLstmModel(nn.Module):
         self.dense3 = nn.Linear(512, 512)
         self.dense4 = nn.Linear(512, 512)
         self.dense5 = nn.Linear(512, 512)
-        self.dense5 = nn.Linear(512, 512)
-        self.dense5 = nn.Linear(512, 512)
         self.dense6 = nn.Linear(512, 1)
 
     def forward(self, z, x):
@@ -40,8 +38,6 @@ class FarmerLstmModel(nn.Module):
         self.dense1 = nn.Linear(484 + 128, 512)
         self.dense2 = nn.Linear(512, 512)
         self.dense3 = nn.Linear(512, 512)
-        self.dense4 = nn.Linear(512, 512)
-        self.dense4 = nn.Linear(512, 512)
         self.dense4 = nn.Linear(512, 512)
         self.dense5 = nn.Linear(512, 512)
         self.dense6 = nn.Linear(512, 1)
