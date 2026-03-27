@@ -60,21 +60,21 @@
 
 ## 架构问题
 
-### 6. PvEView 模块级可变状态
+### ~~6. PvEView 模块级可变状态~~ ✅ 已修复
 
-- **文件**：`src/view/PvEView/PvEDoudizhuDemoView.js`（1142 行）
+- **文件**：`src/view/PvEView/PvEDoudizhuDemoView.js`
 - **描述**：使用模块级 `let` 变量（`gameHistory`、`bombNum`、`legalActions` 等）管理游戏状态，导致组件难以测试、不可复用、热重载时状态丢失。
 - **优先级**：中
 - **修复方案**：重构为 React `useState` / `useReducer`，或将游戏状态封装为独立的状态管理模块。
 
-### 7. AIBattleView 与 ReplayView 高度重复
+### ~~7. AIBattleView 与 ReplayView 高度重复~~ ✅ 已修复
 
 - **文件**：`src/view/AIBattleView/AIBattleView.js`、`src/view/ReplayView/DoudizhuReplayView.js`
 - **描述**：两个组件代码结构几乎一致，仅数据来源不同（前者调用 `/generate_ai_battle`，后者从 `/replay/<id>` 加载）。
 - **优先级**：中
 - **修复方案**：提取公共组件（如 `GamePlaybackView`），通过 props 传入数据源差异。
 
-### 8. 类组件与函数组件混用
+### ~~8. 类组件与函数组件混用~~ ✅ 已修复
 
 - **文件**：`DoudizhuGameBoard.js`、`DoudizhuReplayView.js`、`AIBattleView.js`（类组件）；`PvEDoudizhuDemoView.js`、`ReplayListView.js`、`Navbar.js`（函数组件）
 - **描述**：项目无统一组件风格，增加维护成本。
@@ -97,6 +97,3 @@
 |--------|------|------|
 | 中 | #4 | 后端 URL 硬编码 |
 | 中 | #5 | i18n 缺失 |
-| 中 | #6 | PvEView 模块级可变状态 |
-| 中 | #7 | AIBattleView / ReplayView 重复 |
-| 低 | #8 | 组件风格不统一 |
