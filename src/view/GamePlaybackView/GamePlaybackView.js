@@ -92,6 +92,7 @@ function GamePlaybackView({
             gameStateTimeoutRef.current = null;
         }
 
+        setGameEndDialog(false);
         setFullScreenLoading(true);
         setGameSpeed(0);
 
@@ -159,7 +160,7 @@ function GamePlaybackView({
             }
             gameStateTimer();
         }
-    }, [gameInfo.playerInfo.length]);
+    }, [gameInfo.playerInfo.length, gameInfo.gameStatus]);
 
     // Clear toggleFade after fade-in transition completes
     useEffect(() => {
