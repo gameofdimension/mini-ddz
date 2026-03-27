@@ -10,7 +10,11 @@ type: feedback
 
 **Why:** Maintains code review practices and keeps main branch stable. A past incident (2026-03-26) pushed test code directly to main without approval.
 
-**How to apply:** Before any commit, verify the current branch is not main. Use branch + PR workflow for all changes.
+**How to apply:**
+- Always create a feature branch before committing: `git checkout -b feature/xxx`
+- Never run `git push origin main`
+- Get explicit user approval before committing to main
+- Exceptions: hotfixes, maintenance tasks with explicit approval
 
 ## No gh CLI
 
@@ -24,7 +28,7 @@ type: feedback
 
 **Rule:** Never push to remote without being asked.
 
-**Why:** User wants to control when code is pushed.
+**Why:** User wants to control when code is pushed and prefers a clean commit history per logical change.
 
 **How to apply:** Only push when the user explicitly requests it (e.g., "push", "create PR").
 
