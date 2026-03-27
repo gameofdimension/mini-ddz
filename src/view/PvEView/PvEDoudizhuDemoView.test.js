@@ -1,12 +1,10 @@
 /**
  * Tests for PvEDoudizhuDemoView - Timeout Auto-Play Logic
  *
- * Note: The component uses module-level variables that are initialized
- * at import time based on localStorage. Due to this architecture limitation,
- * we test the core timer logic indirectly through the DoudizhuGameBoard component
- * and verify the gameStateTimer function behavior via integration tests.
+ * The component's game data is now managed via useRef (no module-level mutable state).
+ * We test both the component directly and the core logic indirectly through DoudizhuGameBoard.
  *
- * The timeout auto-play logic is implemented in gameStateTimer() at line 567:
+ * The timeout auto-play logic is implemented in gameStateTimer():
  * - When considerationTime reaches 0
  * - If current player is mainPlayerId and game is playing
  * - It calls proceedNextTurn() with auto-selected cards or pass
@@ -18,6 +16,7 @@ import React from 'react';
 // considerationTime as a prop
 import DoudizhuGameBoard from '../../components/GameBoard/DoudizhuGameBoard';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { createInitialGameData } from '../../utils/gameData';
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
@@ -171,5 +170,101 @@ describe('Game Board State for Timeout', () => {
         render(<DoudizhuGameBoard {...defaultProps} gameStatus="ready" />);
         // Role selection should be shown instead
         expect(screen.getByText('doudizhu.play_as_landlord')).toBeInTheDocument();
+    });
+});
+
+describe('createInitialGameData', () => {
+    it('should return a valid initial game data structure', () => {
+        const data = createInitialGameData();
+        expect(data).toHaveProperty('shuffledDeck');
+        expect(data).toHaveProperty('threeLandlordCards');
+        expect(data).toHaveProperty('originalThreeLandlordCards');
+        expect(data).toHaveProperty('initHands');
+        expect(data).toHaveProperty('replayInitHands');
+        expect(data).toHaveProperty('playerInfo');
+        expect(data).toHaveProperty('gameHistory');
+        expect(data).toHaveProperty('bombNum');
+        expect(data).toHaveProperty('lastMoveLandlord');
+        expect(data).toHaveProperty('lastMoveLandlordDown');
+        expect(data).toHaveProperty('lastMoveLandlordUp');
+        expect(data).toHaveProperty('playedCardsLandlord');
+        expect(data).toHaveProperty('playedCardsLandlordDown');
+        expect(data).toHaveProperty('playedCardsLandlordUp');
+        expect(data).toHaveProperty('legalActions');
+        expect(data).toHaveProperty('hintIdx');
+        expect(data).toHaveProperty('gameEndDialogTitle');
+        expect(data).toHaveProperty('moveHistory');
+    });
+
+    it('should initialize with empty arrays and zero counters', () => {
+        const data = createInitialGameData();
+        expect(data.playerInfo).toEqual([]);
+        expect(data.gameHistory).toEqual([]);
+        expect(data.bombNum).toBe(0);
+        expect(data.lastMoveLandlord).toEqual([]);
+        expect(data.lastMoveLandlordDown).toEqual([]);
+        expect(data.lastMoveLandlordUp).toEqual([]);
+        expect(data.playedCardsLandlord).toEqual([]);
+        expect(data.playedCardsLandlordDown).toEqual([]);
+        expect(data.playedCardsLandlordUp).toEqual([]);
+        expect(data.moveHistory).toEqual([]);
+        expect(data.hintIdx).toBe(-1);
+        expect(data.gameEndDialogTitle).toBe('');
+        expect(data.replayInitHands).toBeNull();
+    });
+
+    it('should create a shuffled 54-card deck with proper splits', () => {
+        const data = createInitialGameData();
+        // shuffledDeck should have 54 cards
+        expect(data.shuffledDeck).toHaveLength(54);
+        // threeLandlordCards should have 3 cards
+        expect(data.threeLandlordCards).toHaveLength(3);
+        // originalThreeLandlordCards should match
+        expect(data.originalThreeLandlordCards).toEqual(data.threeLandlordCards);
+        // initHands: 17 + 17 + 17 + 3 landlord = 54
+        expect(data.initHands).toHaveLength(3);
+        expect(data.initHands[0]).toHaveLength(17);
+        expect(data.initHands[1]).toHaveLength(17);
+        expect(data.initHands[2]).toHaveLength(17);
+    });
+
+    it('should initialize legalActions with turn -1', () => {
+        const data = createInitialGameData();
+        expect(data.legalActions).toEqual({ turn: -1, actions: [] });
+    });
+
+    it('should produce different data on each call (shuffled)', () => {
+        // Create many instances; at least one should differ
+        const first = JSON.stringify(createInitialGameData().shuffledDeck);
+        let foundDifferent = false;
+        for (let i = 0; i < 20; i++) {
+            if (JSON.stringify(createInitialGameData().shuffledDeck) !== first) {
+                foundDifferent = true;
+                break;
+            }
+        }
+        expect(foundDifferent).toBe(true);
+    });
+
+    it('should reset cleanly via createInitialGameData()', () => {
+        // Simulate a "used" game data state
+        const data = createInitialGameData();
+        data.playerInfo = [{ id: 0, role: 'landlord' }];
+        data.gameHistory = [['3', '4']];
+        data.bombNum = 5;
+        data.hintIdx = 3;
+        data.moveHistory.push({ playerIdx: 0, move: 'S3' });
+        data.legalActions = { turn: 10, actions: ['333', '444'] };
+        data.gameEndDialogTitle = 'Landlord Wins';
+
+        // Reset
+        const fresh = createInitialGameData();
+        expect(fresh.playerInfo).toEqual([]);
+        expect(fresh.gameHistory).toEqual([]);
+        expect(fresh.bombNum).toBe(0);
+        expect(fresh.hintIdx).toBe(-1);
+        expect(fresh.moveHistory).toEqual([]);
+        expect(fresh.legalActions).toEqual({ turn: -1, actions: [] });
+        expect(fresh.gameEndDialogTitle).toBe('');
     });
 });
