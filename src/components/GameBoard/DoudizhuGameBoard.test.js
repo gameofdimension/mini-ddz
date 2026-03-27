@@ -173,4 +173,72 @@ describe('DoudizhuGameBoard component', () => {
         const playButton = screen.getByText('doudizhu.play').closest('button');
         expect(playButton).not.toBeDisabled();
     });
+
+    describe('opponent hand sorting', () => {
+        const getRenderedRanks = (container, playerId) => {
+            const playerEl = container.querySelector(`#${playerId}`);
+            const ranks = playerEl.querySelectorAll('.rank');
+            return Array.from(ranks).map((el) => el.textContent);
+        };
+
+        it('should sort left opponent hand in descending order', () => {
+            // mainPlayerId=0 => bottomIdx=0, rightIdx=1, leftIdx=2
+            const props = {
+                ...defaultProps,
+                hands: [
+                    ['SA'], // main player (bottom)
+                    ['SK'], // right opponent
+                    ['S3', 'SA', 'H7', 'D5'], // left opponent, unsorted
+                ],
+            };
+            const { container } = render(<DoudizhuGameBoard {...props} />);
+            const ranks = getRenderedRanks(container, 'left-player');
+            expect(ranks).toEqual(['A', '7', '5', '3']);
+        });
+
+        it('should sort right opponent hand in descending order', () => {
+            const props = {
+                ...defaultProps,
+                hands: [
+                    ['SA'], // main player (bottom)
+                    ['S9', 'H4', 'D2', 'CJ'], // right opponent, unsorted
+                    ['S3'], // left opponent
+                ],
+            };
+            const { container } = render(<DoudizhuGameBoard {...props} />);
+            const ranks = getRenderedRanks(container, 'right-player');
+            expect(ranks).toEqual(['2', 'J', '9', '4']);
+        });
+
+        it('should handle pass for opponent hand', () => {
+            const props = {
+                ...defaultProps,
+                hands: [['SA'], 'pass', ['S3']],
+            };
+            const { container } = render(<DoudizhuGameBoard {...props} />);
+            // hands[1] is right opponent for mainPlayerId=0
+            expect(container.querySelector('#right-player')).toHaveTextContent('doudizhu.pass');
+        });
+
+        it('should split sorted cards into up and down rows when more than 10', () => {
+            const props = {
+                ...defaultProps,
+                hands: [
+                    ['SA'], // main player (bottom)
+                    ['S3'], // right opponent
+                    ['S3', 'H4', 'D5', 'S6', 'H7', 'D8', 'S9', 'HT', 'DJ', 'SQ', 'HK'], // left opponent, 11 cards
+                ],
+            };
+            const { container } = render(<DoudizhuGameBoard {...props} />);
+            const leftPlayer = container.querySelector('#left-player');
+            const upRanks = Array.from(
+                leftPlayer.querySelectorAll('.player-hand-up .rank'),
+            ).map((el) => el.textContent);
+            const downRanks = Array.from(
+                leftPlayer.querySelectorAll('.player-hand-down .rank'),
+            ).map((el) => el.textContent);
+            expect(upRanks).toEqual(['K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4']);
+            expect(downRanks).toEqual(['3']);
+        });
+    });
 });

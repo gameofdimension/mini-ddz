@@ -194,7 +194,14 @@ function DoudizhuGameBoard({
 
     const computeSideHand = useCallback(
         (cards) => {
-            const sorted = cards === 'pass' ? cards : sortDoudizhuCards(cards);
+            if (cards === 'pass') {
+                return (
+                    <div className="non-card">
+                        <span>{t('doudizhu.pass')}</span>
+                    </div>
+                );
+            }
+            const sorted = sortDoudizhuCards(cards);
             let upCards;
             let downCards = [];
             if (sorted.length > 10) {
@@ -250,7 +257,7 @@ function DoudizhuGameBoard({
                 </div>
             );
         },
-        [showCardBack],
+        [showCardBack, t],
     );
 
     const playerDecisionArea = useCallback(
