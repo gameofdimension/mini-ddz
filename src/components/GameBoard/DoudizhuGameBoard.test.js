@@ -241,4 +241,22 @@ describe('DoudizhuGameBoard component', () => {
             expect(downRanks).toEqual(['3']);
         });
     });
+
+    describe('main player hand sorting', () => {
+        it('should sort bottom player hand in descending order', () => {
+            const props = {
+                ...defaultProps,
+                hands: [
+                    ['S3', 'SA', 'H7', 'D5'], // main player, unsorted
+                    ['SK'],
+                    ['SK'],
+                ],
+            };
+            const { container } = render(<DoudizhuGameBoard {...props} />);
+            const ranks = Array.from(
+                container.querySelector('#bottom-player .player-hand').querySelectorAll('.rank'),
+            ).map((el) => el.textContent);
+            expect(ranks).toEqual(['A', '7', '5', '3']);
+        });
+    });
 });
