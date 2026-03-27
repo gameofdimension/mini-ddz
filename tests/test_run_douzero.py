@@ -18,20 +18,25 @@ pytestmark = pytest.mark.skipif(
     reason="pretrained model files not available (gitignored)",
 )
 
-# Import after path setup
-from run_douzero import (
-    Card2Suit,
-    EnvCard2RealCard,
-    InfoSet,
-    RealCard2EnvCard,
-    _action_to_suit_format,
-    _assign_card_suits,
-    _cards_to_suit_format,
-    _deal_cards,
-    _get_legal_card_play_actions,
-    _init_deck,
-    app,
-)
+# Import after skipif check — guard with try/except because the import
+# triggers module-level model loading in run_douzero.py
+try:
+    from run_douzero import (
+        Card2Suit,
+        EnvCard2RealCard,
+        InfoSet,
+        RealCard2EnvCard,
+        _action_to_suit_format,
+        _assign_card_suits,
+        _cards_to_suit_format,
+        _deal_cards,
+        _get_legal_card_play_actions,
+        _init_deck,
+        app,
+    )
+except FileNotFoundError:
+    if _model_available:
+        raise
 
 
 @pytest.fixture
