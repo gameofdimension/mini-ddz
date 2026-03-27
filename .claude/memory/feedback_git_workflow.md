@@ -1,6 +1,6 @@
 ---
 name: git workflow
-description: Branch + PR flow, no direct main commits, no gh CLI, no auto push, no Co-Authored-By
+description: Branch + PR flow, no direct main commits, no gh CLI, no auto push, no Co-Authored-By, no amending
 type: feedback
 ---
 
@@ -39,3 +39,11 @@ type: feedback
 **Why:** User prefers cleaner commit history without co-author attribution.
 
 **How to apply:** Omit the Co-Authored-By line when drafting commit messages.
+
+## No amending commits
+
+**Rule:** Never amend previous commits. Always create new commits for fixes.
+
+**Why:** User prefers a clean commit history per logical change — each commit should be a distinct, immutable record.
+
+**How to apply:** For any follow-up fix, even small ones on the same branch, create a new commit instead of amending.
