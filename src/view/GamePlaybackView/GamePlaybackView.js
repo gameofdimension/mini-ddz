@@ -245,6 +245,10 @@ function GamePlaybackView({
     // --- Timer ---
 
     const gameStateTimer = useCallback(() => {
+        if (gameStateTimeoutRef.current) {
+            window.clearTimeout(gameStateTimeoutRef.current);
+            gameStateTimeoutRef.current = null;
+        }
         gameStateTimeoutRef.current = setTimeout(() => {
             setGameInfo((prev) => {
                 if (prev.gameStatus !== 'playing') return prev;
