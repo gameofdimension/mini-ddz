@@ -76,7 +76,9 @@ function GamePlaybackView({
     const moveHistoryRef = useRef([]);
     const gameStateHistoryRef = useRef([]);
     const gameSpeedRef = useRef(gameSpeed);
+    const gameInfoRef = useRef(gameInfo);
     gameSpeedRef.current = gameSpeed;
+    gameInfoRef.current = gameInfo;
 
     // --- Data loading ---
 
@@ -167,13 +169,14 @@ function GamePlaybackView({
     // --- Game state generation ---
 
     const generateNewState = useCallback(() => {
-        let newGameInfo = deepCopy(gameInfo);
-        if (gameInfo.turn === moveHistoryRef.current.length) return newGameInfo;
-        if (gameInfo.turn + 1 < gameStateHistoryRef.current.length) {
-            newGameInfo = deepCopy(gameStateHistoryRef.current[gameInfo.turn + 1]);
+        const currentInfo = gameInfoRef.current;
+        let newGameInfo = deepCopy(currentInfo);
+        if (currentInfo.turn === moveHistoryRef.current.length) return newGameInfo;
+        if (currentInfo.turn + 1 < gameStateHistoryRef.current.length) {
+            newGameInfo = deepCopy(gameStateHistoryRef.current[currentInfo.turn + 1]);
         } else {
-            let newMove = moveHistoryRef.current[gameInfo.turn];
-            if (newMove.playerIdx === gameInfo.currentPlayer) {
+            let newMove = moveHistoryRef.current[currentInfo.turn];
+            if (newMove.playerIdx === currentInfo.currentPlayer) {
                 newGameInfo.latestAction[newMove.playerIdx] = cardStr2Arr(
                     Array.isArray(newMove.move) ? newMove.move.join(' ') : newMove.move,
                 );
@@ -194,7 +197,7 @@ function GamePlaybackView({
                 }
                 if (remainedCards.length === 0) {
                     doubleRaf(() => {
-                        const winner = gameInfo.playerInfo.find((element) => {
+                        const winner = currentInfo.playerInfo.find((element) => {
                             return element.index === newMove.playerIdx;
                         });
                         if (winner) {
@@ -240,57 +243,46 @@ function GamePlaybackView({
             }
         }
         return newGameInfo;
-    }, [gameInfo]);
+    }, []);
 
     // --- Timer ---
 
+    // Matches original class component logic:
+    // Branch 1 (considerationTime > 0): decrement, set fade-out if reaching 0, self-reschedule
+    // Branch 2 (considerationTime <= 0): generate new state, do NOT self-reschedule
+    // Timer is restarted by runNewTurn (called from DoudizhuGameBoard when turn changes)
     const gameStateTimer = useCallback(() => {
         if (gameStateTimeoutRef.current) {
             window.clearTimeout(gameStateTimeoutRef.current);
             gameStateTimeoutRef.current = null;
         }
         gameStateTimeoutRef.current = setTimeout(() => {
-            setGameInfo((prev) => {
-                if (prev.gameStatus !== 'playing') return prev;
-                let currentConsiderationTime = prev.considerationTime;
-                if (currentConsiderationTime > 0) {
-                    currentConsiderationTime -= considerationTimeDeduction * Math.pow(2, gameSpeedRef.current);
-                    currentConsiderationTime = currentConsiderationTime < 0 ? 0 : currentConsiderationTime;
-                    if (currentConsiderationTime === 0 && gameSpeedRef.current < 2) {
-                        return { ...prev, considerationTime: currentConsiderationTime, toggleFade: 'fade-out' };
-                    }
-                    return { ...prev, considerationTime: currentConsiderationTime };
+            const currentConsiderationTime = gameInfoRef.current.considerationTime;
+            if (currentConsiderationTime > 0) {
+                let newTime = currentConsiderationTime - considerationTimeDeduction * Math.pow(2, gameSpeedRef.current);
+                newTime = newTime < 0 ? 0 : newTime;
+                if (newTime === 0 && gameSpeedRef.current < 2) {
+                    setGameInfo((prev) => ({ ...prev, toggleFade: 'fade-out' }));
                 }
-                return prev;
-            });
-
-            // Reschedule next tick
-            gameStateTimer();
-        }, considerationTimeDeduction);
-    }, []);
-
-    // Trigger new state when considerationTime reaches 0
-    useEffect(() => {
-        if (gameInfo.considerationTime === 0 && gameInfo.gameStatus === 'playing' && moveHistoryRef.current.length > 0) {
-            const newGameInfo = generateNewState();
-            if (newGameInfo.gameStatus === 'over') return;
-            newGameInfo.gameStatus = 'playing';
-            if (gameInfo.toggleFade === 'fade-out') {
-                newGameInfo.toggleFade = 'fade-in';
+                setGameInfo((prev) => ({ ...prev, considerationTime: newTime }));
+                gameStateTimer();
+            } else {
+                const newGameInfo = generateNewState();
+                if (newGameInfo.gameStatus === 'over') return;
+                newGameInfo.gameStatus = 'playing';
+                if (gameInfoRef.current.toggleFade === 'fade-out') {
+                    newGameInfo.toggleFade = 'fade-in';
+                }
+                setGameInfo(newGameInfo, () => {
+                    if (gameInfoRef.current.toggleFade !== '') {
+                        setTimeout(() => {
+                            setGameInfo((prev) => ({ ...prev, toggleFade: '' }));
+                        }, 200);
+                    }
+                });
             }
-            setGameInfo(newGameInfo);
-        }
-    }, [gameInfo.considerationTime, gameInfo.gameStatus, gameInfo.toggleFade, generateNewState]);
-
-    // Clear toggleFade after animation
-    useEffect(() => {
-        if (gameInfo.toggleFade !== '' && gameInfo.gameStatus === 'playing') {
-            const timer = setTimeout(() => {
-                setGameInfo((prev) => ({ ...prev, toggleFade: '' }));
-            }, 200);
-            return () => clearTimeout(timer);
-        }
-    }, [gameInfo.toggleFade, gameInfo.gameStatus]);
+        }, considerationTimeDeduction);
+    }, [generateNewState]);
 
     // --- Playback controls ---
 
