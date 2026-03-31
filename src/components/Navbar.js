@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 function Navbar() {
     const history = useHistory();
     const location = useLocation();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [locale, setLocale] = useState(localStorage.getItem('LOCALE') || 'en');
 
     useEffect(() => {
@@ -35,11 +35,11 @@ function Navbar() {
                 <div className={"stretch"} />
                 <div className="ai-battle-info" onClick={() => history.push('/ai-battle')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/ai-battle' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
                     <div className="ai-battle-icon" style={{ marginRight: '5px' }}><SportsEsportsIcon /></div>
-                    <div className="ai-battle-text" style={{ fontWeight: 'bold' }}>3 AI 对战</div>
+                    <div className="ai-battle-text" style={{ fontWeight: 'bold' }}>{t('nav.three_ai_battle')}</div>
                 </div>
                 <div className="replay-info" onClick={() => history.push('/replays')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/replays' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
                     <div className="replay-icon" style={{ marginRight: '5px' }}><ReplayIcon /></div>
-                    <div className="replay-text">回放</div>
+                    <div className="replay-text">{t('nav.replay')}</div>
                 </div>
                 <div className="locale-info" style={{ display: 'flex', alignItems: 'center' }}>
                     <TranslateIcon style={{ width: '1.2rem', height: '1.2rem', marginRight: '5px' }} />

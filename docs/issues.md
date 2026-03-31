@@ -36,7 +36,7 @@
 
 ## 硬编码
 
-### 4. 后端 URL 硬编码为 localhost
+### ~~4. 后端 URL 硬编码为 localhost~~ ✅ 已修复
 
 - **文件**：`src/utils/config.js`
 - **描述**：`douzeroDemoUrl` 硬编码为 `http://127.0.0.1:5050`，无法在不同部署环境（测试/生产）中切换。
@@ -47,7 +47,7 @@
 
 ## 国际化 (i18n) 缺失
 
-### 5. 多处硬编码文本未纳入 i18n
+### ~~5. 多处硬编码文本未纳入 i18n~~ ✅ 已修复
 
 - **文件**：`src/components/Navbar.js`、`src/view/ReplayView/DoudizhuReplayView.js`、`src/view/AIBattleView/AIBattleView.js`
 - **描述**：
@@ -95,5 +95,3 @@
 
 | 优先级 | 编号 | 问题 |
 |--------|------|------|
-| 中 | #4 | 后端 URL 硬编码 |
-| 中 | #5 | i18n 缺失 |

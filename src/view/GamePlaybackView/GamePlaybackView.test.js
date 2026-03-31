@@ -11,6 +11,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key) => key }),
     withTranslation: () => (Component) => {
         const WrappedComponent = (props) => <Component {...props} t={(key) => key} />;
         WrappedComponent.displayName = `withTranslation(${Component.displayName || Component.name})`;
@@ -110,8 +111,8 @@ describe('GamePlaybackView', () => {
     it('should render without crashing in ready state', () => {
         const { fetch } = createMockFetch();
         render(<GamePlaybackView {...defaultProps} fetchData={fetch} />);
-        expect(screen.getByText(/Start/)).toBeInTheDocument();
-        expect(screen.getAllByText(/Waiting.../).length).toBeGreaterThan(0);
+        expect(screen.getByText('Start')).toBeInTheDocument();
+        expect(screen.getAllByText(/waiting\.\.\./).length).toBeGreaterThan(0);
     });
 
     it('should call fetchData on Start button click', async () => {
@@ -198,13 +199,13 @@ describe('GamePlaybackView', () => {
     it('should render Turn counter', () => {
         const { fetch } = createMockFetch();
         render(<GamePlaybackView {...defaultProps} fetchData={fetch} />);
-        expect(screen.getByText(/Turn 0/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 0/)).toBeInTheDocument();
     });
 
     it('should render Game Speed label', () => {
         const { fetch } = createMockFetch();
         render(<GamePlaybackView {...defaultProps} fetchData={fetch} />);
-        expect(screen.getByText('Game Speed')).toBeInTheDocument();
+        expect(screen.getByText('game_playback.game_speed')).toBeInTheDocument();
     });
 
     it('should render progress bar', () => {

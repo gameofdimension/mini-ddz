@@ -22,6 +22,49 @@
     "play": "Play",
     "loading...": "Loading...",
 
+    "game_playback": {
+        "start": "Start",
+        "restart": "Restart",
+        "new_battle": "New Battle",
+        "pause": "Pause",
+        "resume": "Resume",
+        "landlord_wins": "Landlord Wins",
+        "peasants_win": "Peasants Win",
+        "game_ends": "Game Ends!",
+        "ok": "OK",
+        "current_player": "Current Player",
+        "game_speed": "Game Speed",
+        "rule_based": "Rule Based",
+        "probability": "Probability {{percent}}%",
+        "expected_payoff": "Expected payoff: {{value}}"
+    },
+
+    "nav": {
+        "three_ai_battle": "3 AI Battle",
+        "replay": "Replay"
+    },
+
+    "errors": {
+        "error_loading": "Error loading game data",
+        "error_loading_replay": "Error in loading replay data",
+        "error_generating_battle": "Error in generating AI battle",
+        "invalid_cards": "Cannot find cards in move from player's hand",
+        "inconsistent_state": "inconsistent game state history length and turn number",
+        "mismatched_player": "Mismatched current player index",
+        "error_finding_winner": "Error in finding winner",
+        "wrong_position": "Wrong douzero player position",
+        "prediction_failed": "Error receiving prediction result, please try refresh the page",
+        "api_error": "Error: {{message}}",
+        "illegal_action": "Selected cards are not legal action",
+        "legal_action_missing": "Legal Action not received or turn info inconsistent",
+        "unknown_error": "Unknown error",
+        "network_error": "Network error"
+    },
+
+    "game_board": {
+        "id_label": "ID"
+    },
+
     "doudizhu": {
         "ai_hand_faceup": "AI Hand Face-Up",
         "play_as_landlord": "Play As Landlord",
@@ -42,6 +85,7 @@
         "pass": "Pass",
         "deselect": "Deselect",
         "hint": "Hint",
-        "play": "Play"
+        "play": "Play",
+        "all": "All"
     }
 }

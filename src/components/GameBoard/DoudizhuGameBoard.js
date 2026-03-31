@@ -55,7 +55,7 @@ function DoudizhuGameBoard({
             if (playerInfo.length > 0 && playerIdx >= 0 && playerIdx < playerInfo.length) {
                 const player = playerInfo[playerIdx];
                 const chipTitle =
-                    player && player.agentInfo && player.agentInfo.name ? '' : 'ID';
+                    player && player.agentInfo && player.agentInfo.name ? '' : t('game_board.id_label');
                 const chipLabel =
                     player && player.agentInfo && player.agentInfo.name
                         ? player.agentInfo.name
@@ -85,7 +85,7 @@ function DoudizhuGameBoard({
                 return (
                     <div>
                         <img src={PlaceHolderPlayer} alt={'Player'} height="70%" width="70%" />
-                        <Chip avatar={<Avatar>ID</Avatar>} label={playerId} color="primary" />
+                        <Chip avatar={<Avatar>{t('game_board.id_label')}</Avatar>} label={playerId} color="primary" />
                     </div>
                 );
         },
