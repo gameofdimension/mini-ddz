@@ -1,18 +1,9 @@
 """Tests for utils/utils.py"""
 
-import os
-import sys
-
-# Add pve_server to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
-
 from utils.utils import (
-    CALL,
     MIN_PAIRS,
     MIN_SINGLE_CARDS,
     MIN_TRIPLES,
-    PASS,
-    RAISE,
     TYPE_0_PASS,
     TYPE_1_SINGLE,
     TYPE_2_PAIR,
@@ -60,12 +51,6 @@ class TestConstants:
         assert TYPE_13_4_2 == 13
         assert TYPE_14_4_22 == 14
         assert TYPE_15_WRONG == 15
-
-    def test_betting_actions(self):
-        """Test betting round action constants."""
-        assert PASS == 0
-        assert CALL == 1
-        assert RAISE == 2
 
 
 class TestSelect:

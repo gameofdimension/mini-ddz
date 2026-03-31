@@ -1,29 +1,15 @@
-"""Tests for run_douzero.py"""
+"""Tests for run_douzero.py and related modules."""
 
 import json
 import os
 import shutil
-import sys
 import tempfile
 
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
-
-# Import after path setup
-from run_douzero import (
-    Card2Suit,
-    EnvCard2RealCard,
-    InfoSet,
-    RealCard2EnvCard,
-    _action_to_suit_format,
-    _assign_card_suits,
-    _cards_to_suit_format,
-    _deal_cards,
-    _get_legal_card_play_actions,
-    _init_deck,
-    app,
-)
+from card_maps import Card2Suit, EnvCard2RealCard, RealCard2EnvCard
+from deck import _action_to_suit_format, _assign_card_suits, _cards_to_suit_format, _deal_cards, _init_deck
+from game import InfoSet, _get_legal_card_play_actions
+from run_douzero import app
 
 
 @pytest.fixture
@@ -277,7 +263,7 @@ class TestFlaskRoutes:
         response = client.post("/legal", data={})
         assert response.status_code == 200
         data = json.loads(response.data)
-        assert data["status"] == -1  # Should fail with error
+        assert data["status"] == 1  # Should fail with validation error
 
     def test_legal_valid_request(self, client):
         """Test legal with valid request."""

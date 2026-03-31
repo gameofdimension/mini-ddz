@@ -1,10 +1,5 @@
 """Tests for utils/move_detector.py"""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
-
 from utils.move_detector import get_move_type, is_continuous_seq
 from utils.utils import (
     TYPE_0_PASS,

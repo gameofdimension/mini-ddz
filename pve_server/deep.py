@@ -4,6 +4,15 @@ from collections import Counter
 import numpy as np
 import torch
 
+# Feature dimensions
+CARD_FEATURE_DIM = 54  # 4 suits × 13 ranks + 2 jokers
+ACTION_SEQ_FEATURES = 162  # 3 actions × CARD_FEATURE_DIM
+ACTION_SEQ_LENGTH = 15  # history depth
+ACTION_SEQ_WINDOW = 5  # number of recent actions used by LSTM
+NUM_BOMB_CLASSES = 15  # one-hot bomb count categories
+MAX_LANDLORD_FEATURES = 373  # landlord input dimension
+MAX_FARMER_FEATURES = 484  # farmer input dimension
+
 Card2Column = {
     3: 0,
     4: 1,
@@ -32,7 +41,7 @@ NumOnes2Array = {
 
 
 def _get_one_hot_bomb(bomb_num):
-    one_hot = np.zeros(15, dtype=np.float32)
+    one_hot = np.zeros(NUM_BOMB_CLASSES, dtype=np.float32)
     one_hot[bomb_num] = 1
     return one_hot
 
@@ -56,11 +65,11 @@ def _load_model(position, model_dir, use_onnx):
         model.eval()
 
         if use_onnx:
-            z = torch.randn(1, 5, 162, requires_grad=True)
+            z = torch.randn(1, ACTION_SEQ_WINDOW, ACTION_SEQ_FEATURES, requires_grad=True)
             if position == "landlord":
-                x = torch.randn(1, 373, requires_grad=True)
+                x = torch.randn(1, MAX_LANDLORD_FEATURES, requires_grad=True)
             else:
-                x = torch.randn(1, 484, requires_grad=True)
+                x = torch.randn(1, MAX_FARMER_FEATURES, requires_grad=True)
             torch.onnx.export(
                 model,
                 (z, x),
@@ -84,7 +93,7 @@ def _load_model(position, model_dir, use_onnx):
     return model
 
 
-def _process_action_seq(sequence, length=15):
+def _process_action_seq(sequence, length=ACTION_SEQ_LENGTH):
     sequence = sequence[-length:].copy()
     if len(sequence) < length:
         empty_sequence = [[] for _ in range(length - len(sequence))]
@@ -98,9 +107,21 @@ class DeepAgent:
         self.model = _load_model(position, model_dir, use_onnx)
         self.use_onnx = use_onnx
 
+    def _run_inference(self, z_batch, x_batch):
+        """Run model inference, handling ONNX/CUDA/CPU backends."""
+        if self.use_onnx:
+            return self.model.run(None, {"z": z_batch, "x": x_batch})[0]
+        z_tensor = torch.from_numpy(z_batch).float()
+        x_tensor = torch.from_numpy(x_batch).float()
+        if torch.cuda.is_available():
+            y_pred = self.model.forward(z_tensor.cuda(), x_tensor.cuda())
+            return y_pred.cpu().detach().numpy()
+        y_pred = self.model.forward(z_tensor, x_tensor)
+        return y_pred.detach().numpy()
+
     def cards2array(self, list_cards):
         if len(list_cards) == 0:
-            return np.zeros(54, dtype=np.float32)
+            return np.zeros(CARD_FEATURE_DIM, dtype=np.float32)
 
         matrix = np.zeros([4, 13], dtype=np.float32)
         jokers = np.zeros(2, dtype=np.float32)
@@ -182,18 +203,7 @@ class DeepAgent:
             )
             z = self.action_seq_list2array(_process_action_seq(infoset.card_play_action_seq))
             z_batch = np.repeat(z[np.newaxis, :, :], num_legal_actions, axis=0)
-            if self.use_onnx:
-                ort_inputs = {"z": z_batch, "x": x_batch}
-                y_pred = self.model.run(None, ort_inputs)[0]
-            elif torch.cuda.is_available():
-                y_pred = self.model.forward(
-                    torch.from_numpy(z_batch).float().cuda(),
-                    torch.from_numpy(x_batch).float().cuda(),
-                )
-                y_pred = y_pred.cpu().detach().numpy()
-            else:
-                y_pred = self.model.forward(torch.from_numpy(z_batch).float(), torch.from_numpy(x_batch).float())
-                y_pred = y_pred.detach().numpy()
+            y_pred = self._run_inference(z_batch, x_batch)
         else:
             last_landlord_action = self.cards2array(infoset.last_moves[0])
             last_landlord_action_batch = np.repeat(last_landlord_action[np.newaxis, :], num_legal_actions, axis=0)
@@ -244,22 +254,10 @@ class DeepAgent:
             )
             z = self.action_seq_list2array(_process_action_seq(infoset.card_play_action_seq))
             z_batch = np.repeat(z[np.newaxis, :, :], num_legal_actions, axis=0)
-            if self.use_onnx:
-                ort_inputs = {"z": z_batch, "x": x_batch}
-                y_pred = self.model.run(None, ort_inputs)[0]
-            elif torch.cuda.is_available():
-                y_pred = self.model.forward(
-                    torch.from_numpy(z_batch).float().cuda(),
-                    torch.from_numpy(x_batch).float().cuda(),
-                )
-                y_pred = y_pred.cpu().detach().numpy()
-            else:
-                y_pred = self.model.forward(torch.from_numpy(z_batch).float(), torch.from_numpy(x_batch).float())
-                y_pred = y_pred.detach().numpy()
+            y_pred = self._run_inference(z_batch, x_batch)
 
         y_pred = y_pred.flatten()
 
-        # best_action_index = np.argmax(y_pred, axis=0)[0]
         size = min(3, len(y_pred))
         best_action_index = np.argpartition(y_pred, -size)[-size:]
         best_action_confidence = y_pred[best_action_index]

@@ -1,10 +1,5 @@
 """Tests for utils/move_selector.py"""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
-
 from utils.move_selector import (
     common_handle,
     filter_type_1_single,
