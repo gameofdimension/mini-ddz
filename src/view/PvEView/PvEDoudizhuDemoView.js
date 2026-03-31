@@ -274,7 +274,7 @@ function PvEDoudizhuDemoView() {
                     break;
                 default:
                     Message({
-                        message: 'Wrong douzero player position',
+                        message: t('errors.wrong_position'),
                         type: 'error',
                         showClose: true,
                     });
@@ -313,7 +313,7 @@ function PvEDoudizhuDemoView() {
                             : '-',
                     },
                     {
-                        role: 'All',
+                        role: t('doudizhu.all'),
                         win: gameStatistics.totalWinNum,
                         total: gameStatistics.totalGameNum,
                         winRate: gameStatistics.totalGameNum
@@ -434,14 +434,14 @@ function PvEDoudizhuDemoView() {
                         });
                     } else {
                         Message({
-                            message: 'Error receiving prediction result, please try refresh the page',
+                            message: t('errors.prediction_failed'),
                             type: 'error',
                             showClose: true,
                         });
                     }
                 } else {
                     Message({
-                        message: `Error: ${apiRes.data.message}`,
+                        message: t('errors.api_error', { message: apiRes.data.message }),
                         type: 'error',
                         showClose: true,
                     });
@@ -474,7 +474,7 @@ function PvEDoudizhuDemoView() {
             }
         } catch (err) {
             Message({
-                message: 'Error receiving prediction result, please try refresh the page',
+                message: t('errors.prediction_failed'),
                 type: 'error',
                 showClose: true,
             });
@@ -604,7 +604,7 @@ function PvEDoudizhuDemoView() {
                 winRate: '-',
             },
             {
-                role: 'All',
+                role: t('doudizhu.all'),
                 win: 0,
                 total: 0,
                 winRate: '-',
@@ -699,7 +699,7 @@ function PvEDoudizhuDemoView() {
                         proceedNextTurn(selectedCards, false);
                     } else {
                         Message({
-                            message: 'Selected cards are not legal action',
+                            message: t('errors.illegal_action'),
                             type: 'warning',
                             showClose: true,
                         });
@@ -707,7 +707,7 @@ function PvEDoudizhuDemoView() {
                     }
                 } else {
                     Message({
-                        message: 'Legal Action not received or turn info inconsistant',
+                        message: t('errors.legal_action_missing'),
                         type: 'error',
                         showClose: true,
                     });
@@ -743,7 +743,7 @@ function PvEDoudizhuDemoView() {
                     setSelectedCards(hintCards);
                 } else {
                     Message({
-                        message: 'Legal Action not received or turn info inconsistant',
+                        message: t('errors.legal_action_missing'),
                         type: 'error',
                         showClose: true,
                     });

@@ -17,6 +17,7 @@ import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import { Layout, Loading, Message } from 'element-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import '../../assets/gameview.scss';
+import { useTranslation } from 'react-i18next';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
 import {
     card2SuiteAndRank,
@@ -71,6 +72,7 @@ function GamePlaybackView({
     const [gameEndDialog, setGameEndDialog] = useState(false);
     const [gameEndDialogText, setGameEndDialogText] = useState('');
     const [fullScreenLoading, setFullScreenLoading] = useState(false);
+    const { t } = useTranslation();
 
     const gameStateTimeoutRef = useRef(null);
     const moveHistoryRef = useRef([]);
@@ -203,7 +205,7 @@ function GamePlaybackView({
                     newGameInfo.hands[newMove.playerIdx] = remainedCards;
                 } else {
                     Message({
-                        message: "Cannot find cards in move from player's hand",
+                        message: t('errors.invalid_cards'),
                         type: 'error',
                         showClose: true,
                     });
@@ -219,16 +221,16 @@ function GamePlaybackView({
                             if (winner.role === 'landlord')
                                 setTimeout(() => {
                                     setGameEndDialog(true);
-                                    setGameEndDialogText('Landlord Wins');
+                                    setGameEndDialogText(t('game_playback.landlord_wins'));
                                 }, 200);
                             else
                                 setTimeout(() => {
                                     setGameEndDialog(true);
-                                    setGameEndDialogText('Peasants Win');
+                                    setGameEndDialogText(t('game_playback.peasants_win'));
                                 }, 200);
                         } else {
                             Message({
-                                message: 'Error in finding winner',
+                                message: t('errors.error_finding_winner'),
                                 type: 'error',
                                 showClose: true,
                             });
@@ -241,7 +243,7 @@ function GamePlaybackView({
                 newGameInfo.completedPercent += 100.0 / (moveHistoryRef.current.length - 1);
             } else {
                 Message({
-                    message: 'Mismatched current player index',
+                    message: t('errors.mismatched_player'),
                     type: 'error',
                     showClose: true,
                 });
@@ -250,7 +252,7 @@ function GamePlaybackView({
                 gameStateHistoryRef.current.push(newGameInfo);
             } else {
                 Message({
-                    message: 'inconsistent game state history length and turn number',
+                    message: t('errors.inconsistent_state'),
                     type: 'error',
                     showClose: true,
                 });
@@ -358,7 +360,7 @@ function GamePlaybackView({
                         color="secondary"
                         onClick={() => pausePlayback()}
                     >
-                        Pause
+                        {t('game_playback.pause')}
                     </Button>
                 );
             case 'paused':
@@ -370,7 +372,7 @@ function GamePlaybackView({
                         color="primary"
                         onClick={() => resumePlayback()}
                     >
-                        Resume
+                        {t('game_playback.resume')}
                     </Button>
                 );
             case 'over':
@@ -410,7 +412,7 @@ function GamePlaybackView({
         if (computedCards === 'pass') {
             return (
                 <div className={'non-card ' + gameInfo.toggleFade}>
-                    <span>{'PASS'}</span>
+                    <span>{t('doudizhu.pass')}</span>
                 </div>
             );
         } else {
@@ -479,10 +481,10 @@ function GamePlaybackView({
                         <div className={'non-card ' + gameInfo.toggleFade}>
                             <span>
                                 {probabilityItemType === 'Rule'
-                                    ? 'Rule Based'
+                                    ? t('game_playback.rule_based')
                                     : probabilityItemType === 'Probability'
-                                    ? `Probability ${(probabilities[1] * 100).toFixed(2)}%`
-                                    : `Expected payoff: ${probabilities[1].toFixed(4)}`}
+                                    ? t('game_playback.probability', { percent: (probabilities[1] * 100).toFixed(2) })
+                                    : t('game_playback.expected_payoff', { value: probabilities[1].toFixed(4) })}
                             </span>
                         </div>
                     ) : (
@@ -491,7 +493,7 @@ function GamePlaybackView({
                 </div>
             );
         } else {
-            return <span className={'waiting'}>Waiting...</span>;
+            return <span className={'waiting'}>{t('waiting...')}</span>;
         }
     };
 
@@ -506,7 +508,7 @@ function GamePlaybackView({
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title" style={{ width: '200px' }}>
-                    {'Game Ends!'}
+                    {t('game_playback.game_ends')}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
@@ -515,7 +517,7 @@ function GamePlaybackView({
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseGameEndDialog} color="primary" autoFocus>
-                        OK
+                        {t('game_playback.ok')}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -545,12 +547,12 @@ function GamePlaybackView({
                             <div className={'probability-player'}>
                                 {gameInfo.playerInfo.length > 0 ? (
                                     <span>
-                                        Current Player: {gameInfo.currentPlayer}
+                                        {t('game_playback.current_player')}: {gameInfo.currentPlayer}
                                         <br />
-                                        Role: {gameInfo.playerInfo[gameInfo.currentPlayer].role}
+                                        {t('doudizhu.role')}: {gameInfo.playerInfo[gameInfo.currentPlayer].role}
                                     </span>
                                 ) : (
-                                    <span>Waiting...</span>
+                                    <span>{t('waiting...')}</span>
                                 )}
                             </div>
                             <Divider />
@@ -602,14 +604,14 @@ function GamePlaybackView({
                                         marginRight: '-1px',
                                     }}
                                 >
-                                    <div style={{ textAlign: 'center' }}>{`Turn ${gameInfo.turn}`}</div>
+                                    <div style={{ textAlign: 'center' }}>{`${t('turn')} ${gameInfo.turn}`}</div>
                                 </Layout.Col>
                                 <Layout.Col span="1" style={{ height: '100%', width: '1px' }}>
                                     <Divider orientation="vertical" />
                                 </Layout.Col>
                                 <Layout.Col span="14">
                                     <div>
-                                        <label className={'form-label-left'}>Game Speed</label>
+                                        <label className={'form-label-left'}>{t('game_playback.game_speed')}</label>
                                         <div style={{ marginLeft: '100px', marginRight: '10px' }}>
                                             <Slider
                                                 value={gameSpeed}

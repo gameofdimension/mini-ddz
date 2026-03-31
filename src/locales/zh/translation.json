@@ -22,6 +22,49 @@
     "play": "播放",
     "loading...": "加载中...",
 
+    "game_playback": {
+        "start": "开始",
+        "restart": "重新开始",
+        "new_battle": "新对局",
+        "pause": "暂停",
+        "resume": "继续",
+        "landlord_wins": "地主胜利",
+        "peasants_win": "农民胜利",
+        "game_ends": "游戏结束!",
+        "ok": "确定",
+        "current_player": "当前玩家",
+        "game_speed": "播放速度",
+        "rule_based": "基于规则",
+        "probability": "概率 {{percent}}%",
+        "expected_payoff": "预期收益: {{value}}"
+    },
+
+    "nav": {
+        "three_ai_battle": "3 AI对战",
+        "replay": "回放"
+    },
+
+    "errors": {
+        "error_loading": "加载游戏数据失败",
+        "error_loading_replay": "加载回放数据失败",
+        "error_generating_battle": "生成AI对战失败",
+        "invalid_cards": "无法从玩家手牌中找到所出的牌",
+        "inconsistent_state": "游戏状态历史长度与回合数不一致",
+        "mismatched_player": "当前玩家索引不匹配",
+        "error_finding_winner": "查找获胜者时出错",
+        "wrong_position": "斗地主玩家位置错误",
+        "prediction_failed": "接收预测结果失败，请刷新页面重试",
+        "api_error": "错误: {{message}}",
+        "illegal_action": "选中的牌不是合法操作",
+        "legal_action_missing": "未收到合法操作或回合信息不一致",
+        "unknown_error": "未知错误",
+        "network_error": "网络错误"
+    },
+
+    "game_board": {
+        "id_label": "ID"
+    },
+
     "doudizhu": {
         "ai_hand_faceup": "显示AI手牌",
         "play_as_landlord": "扮演地主",
@@ -42,6 +85,7 @@
         "pass": "不出",
         "deselect": "取消选择",
         "hint": "提示",
-        "play": "出牌"
+        "play": "出牌",
+        "all": "全部"
     }
 }

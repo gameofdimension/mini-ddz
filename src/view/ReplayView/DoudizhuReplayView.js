@@ -1,10 +1,12 @@
 import axios from 'axios';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { douzeroDemoUrl } from '../../utils/config';
 import { validateReplayData } from '../../utils';
 import { GamePlaybackView } from '../GamePlaybackView';
 
 function DoudizhuReplayView() {
+    const { t } = useTranslation();
     const fetchData = useCallback(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const replayId = urlParams.get('replay_id');
@@ -25,8 +27,8 @@ function DoudizhuReplayView() {
             validate={validateReplayData}
             autoStart={true}
             gameBoardProps={{}}
-            startLabel="Restart"
-            errorMessage="Error in loading replay data"
+            startLabel={t('game_playback.restart')}
+            errorMessage={t('errors.error_loading_replay')}
         />
     );
 }

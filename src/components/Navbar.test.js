@@ -7,6 +7,7 @@ import Navbar from './Navbar';
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
     useTranslation: () => ({
+        t: (key) => key,
         i18n: {
             changeLanguage: jest.fn(),
         },
@@ -31,13 +32,13 @@ describe('Navbar component', () => {
     it('should render the AI Battle button', () => {
         const history = createMemoryHistory();
         renderWithRouter(history);
-        expect(screen.getByText('3 AI 对战')).toBeInTheDocument();
+        expect(screen.getByText('nav.three_ai_battle')).toBeInTheDocument();
     });
 
     it('should render the Replay button', () => {
         const history = createMemoryHistory();
         renderWithRouter(history);
-        expect(screen.getByText('回放')).toBeInTheDocument();
+        expect(screen.getByText('nav.replay')).toBeInTheDocument();
     });
 
     it('should render language selector', () => {
@@ -69,7 +70,7 @@ describe('Navbar component', () => {
         const history = createMemoryHistory();
         renderWithRouter(history);
 
-        const aiBattleButton = screen.getByText('3 AI 对战').closest('div');
+        const aiBattleButton = screen.getByText('nav.three_ai_battle').closest('div');
         fireEvent.click(aiBattleButton);
 
         expect(history.location.pathname).toBe('/ai-battle');
@@ -79,7 +80,7 @@ describe('Navbar component', () => {
         const history = createMemoryHistory();
         renderWithRouter(history);
 
-        const replayButton = screen.getByText('回放').closest('div');
+        const replayButton = screen.getByText('nav.replay').closest('div');
         fireEvent.click(replayButton);
 
         expect(history.location.pathname).toBe('/replays');

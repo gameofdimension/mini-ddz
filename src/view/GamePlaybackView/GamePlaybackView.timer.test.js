@@ -16,6 +16,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key) => key }),
     withTranslation: () => (Component) => {
         const WrappedComponent = (props) => <Component {...props} t={(key) => key} />;
         WrappedComponent.displayName = `withTranslation(${Component.displayName || Component.name})`;
@@ -142,14 +143,14 @@ describe('Timer countdown logic', () => {
     it('should not advance turn during countdown', async () => {
         jest.useFakeTimers();
         await startGame();
-        expect(screen.getByText(/Turn 0/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 0/)).toBeInTheDocument();
 
         // Advance one tick (200ms) — still counting down
         act(() => {
             jest.advanceTimersByTime(200);
         });
 
-        expect(screen.getByText(/Turn 0/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 0/)).toBeInTheDocument();
         jest.useRealTimers();
     });
 
@@ -162,7 +163,7 @@ describe('Timer countdown logic', () => {
             jest.advanceTimersByTime(2200);
         });
 
-        expect(screen.getByText(/Turn 1/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 1/)).toBeInTheDocument();
         jest.useRealTimers();
     });
 
@@ -176,7 +177,7 @@ describe('Timer countdown logic', () => {
         });
 
         // Turn should be exactly 1, not 2 — proves timer stops after state generation
-        expect(screen.getByText(/Turn 1/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 1/)).toBeInTheDocument();
         jest.useRealTimers();
     });
 
@@ -194,7 +195,7 @@ describe('Timer countdown logic', () => {
             });
         }
 
-        expect(screen.getByText(/Turn 3/)).toBeInTheDocument();
+        expect(screen.getByText(/turn 3/)).toBeInTheDocument();
         jest.useRealTimers();
     });
 

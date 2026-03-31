@@ -57,11 +57,11 @@ function ReplayListView() {
                 fetchReplays();
             } else {
                 console.error('Delete failed with status:', response.data);
-                Message.error(t('failed_to_delete_replay') + ': ' + (response.data.message || 'Unknown error'));
+                Message.error(t('failed_to_delete_replay') + ': ' + (response.data.message || t('errors.unknown_error')));
             }
         } catch (error) {
             console.error('Error deleting replay:', error);
-            Message.error(t('failed_to_delete_replay') + ': ' + (error.message || 'Network error'));
+            Message.error(t('failed_to_delete_replay') + ': ' + (error.message || t('errors.network_error')));
         }
     };
 

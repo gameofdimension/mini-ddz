@@ -2,6 +2,15 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
+// Mock react-i18next
+jest.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key) => key,
+        i18n: { changeLanguage: jest.fn() },
+    }),
+    withTranslation: () => (Component) => (props) => <Component {...props} t={(key) => key} />,
+}));
+
 // Mock all view components with simple text
 jest.mock('./view/PvEView', () => ({
     PvEDoudizhuDemoView: () => <div data-testid="pve-view">PvE View</div>,
@@ -33,8 +42,8 @@ describe('App component', () => {
 
     it('should contain navigation buttons', () => {
         const { getByText } = render(<App />);
-        expect(getByText('3 AI 对战')).toBeInTheDocument();
-        expect(getByText('回放')).toBeInTheDocument();
+        expect(getByText('nav.three_ai_battle')).toBeInTheDocument();
+        expect(getByText('nav.replay')).toBeInTheDocument();
     });
 
     it('should contain language selector options', () => {

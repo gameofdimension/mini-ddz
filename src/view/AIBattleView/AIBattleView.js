@@ -1,9 +1,11 @@
 import axios from 'axios';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { douzeroDemoUrl } from '../../utils/config';
 import { GamePlaybackView } from '../GamePlaybackView';
 
 function AIBattleView() {
+    const { t } = useTranslation();
     const fetchData = useCallback(() => {
         return axios.get(`${douzeroDemoUrl}/generate_ai_battle`).then((res) => {
             if (res.data.status !== 0) {
@@ -19,8 +21,8 @@ function AIBattleView() {
             validate={null}
             autoStart={false}
             gameBoardProps={{ gamePlayable: false, showCardBack: false }}
-            startLabel="New Battle"
-            errorMessage="Error in generating AI battle"
+            startLabel={t('game_playback.new_battle')}
+            errorMessage={t('errors.error_generating_battle')}
         />
     );
 }
