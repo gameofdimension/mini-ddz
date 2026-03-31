@@ -1,7 +1,7 @@
 """Tests for models.py"""
 
 import torch
-from models import FarmerLstmModel, LandlordLstmModel, model_dict
+from models import DouZeroModel, model_dict
 
 
 class TestModelDict:
@@ -19,20 +19,19 @@ class TestModelDict:
         assert set(model_dict.keys()) == expected_keys
 
     def test_model_dict_values_are_callable(self):
-        """Test that model_dict values are callable classes."""
-        for key, model_class in model_dict.items():
-            assert callable(model_class)
-            # Should be able to instantiate
-            instance = model_class()
-            assert instance is not None
+        """Test that model_dict values are callable factories."""
+        for key, factory in model_dict.items():
+            assert callable(factory)
+            instance = factory()
+            assert isinstance(instance, DouZeroModel)
 
 
-class TestLandlordLstmModel:
-    """Test LandlordLstmModel class."""
+class TestLandlordModel:
+    """Test landlord model (DouZeroModel with input_dim=373)."""
 
     def test_model_init(self):
         """Test model initialization."""
-        model = LandlordLstmModel()
+        model = model_dict["landlord"]()
         assert model is not None
         assert hasattr(model, "lstm")
         assert hasattr(model, "dense1")
@@ -40,24 +39,20 @@ class TestLandlordLstmModel:
 
     def test_model_forward(self):
         """Test model forward pass."""
-        model = LandlordLstmModel()
+        model = model_dict["landlord"]()
         model.eval()
 
-        # Create dummy inputs
-        # z: (batch=1, seq=5, features=162)
-        # x: (batch=1, features=373)
         z = torch.randn(1, 5, 162)
         x = torch.randn(1, 373)
 
         with torch.no_grad():
             output = model.forward(z, x)
 
-        # Output should be (batch=1, 1)
         assert output.shape == (1, 1)
 
     def test_model_forward_batch(self):
         """Test model forward pass with batch size > 1."""
-        model = LandlordLstmModel()
+        model = model_dict["landlord"]()
         model.eval()
 
         batch_size = 4
@@ -70,12 +65,12 @@ class TestLandlordLstmModel:
         assert output.shape == (batch_size, 1)
 
 
-class TestFarmerLstmModel:
-    """Test FarmerLstmModel class."""
+class TestFarmerModel:
+    """Test farmer models (DouZeroModel with input_dim=484)."""
 
     def test_model_init(self):
         """Test model initialization."""
-        model = FarmerLstmModel()
+        model = model_dict["landlord_up"]()
         assert model is not None
         assert hasattr(model, "lstm")
         assert hasattr(model, "dense1")
@@ -83,24 +78,20 @@ class TestFarmerLstmModel:
 
     def test_model_forward(self):
         """Test model forward pass."""
-        model = FarmerLstmModel()
+        model = model_dict["landlord_up"]()
         model.eval()
 
-        # Create dummy inputs
-        # z: (batch=1, seq=5, features=162)
-        # x: (batch=1, features=484)
         z = torch.randn(1, 5, 162)
         x = torch.randn(1, 484)
 
         with torch.no_grad():
             output = model.forward(z, x)
 
-        # Output should be (batch=1, 1)
         assert output.shape == (1, 1)
 
     def test_model_forward_batch(self):
         """Test model forward pass with batch size > 1."""
-        model = FarmerLstmModel()
+        model = model_dict["landlord_down"]()
         model.eval()
 
         batch_size = 4
@@ -118,7 +109,7 @@ class TestModelOutput:
 
     def test_landlord_output_range(self):
         """Test that landlord model output is in reasonable range."""
-        model = LandlordLstmModel()
+        model = model_dict["landlord"]()
         model.eval()
 
         z = torch.randn(1, 5, 162)
@@ -127,12 +118,11 @@ class TestModelOutput:
         with torch.no_grad():
             output = model.forward(z, x)
 
-        # Output should be a single value (win rate prediction)
         assert output.numel() == 1
 
     def test_farmer_output_range(self):
         """Test that farmer model output is in reasonable range."""
-        model = FarmerLstmModel()
+        model = model_dict["landlord_up"]()
         model.eval()
 
         z = torch.randn(1, 5, 162)
