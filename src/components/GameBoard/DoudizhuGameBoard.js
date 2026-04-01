@@ -25,7 +25,7 @@ function DoudizhuGameBoard({
     gamePlayable,
     handleMainPlayerAct,
     handleSelectRole,
-    handleLocaleChange,
+    handleLocaleChange = () => {},
     isPassDisabled,
     isHintDisabled,
     showCardBack,

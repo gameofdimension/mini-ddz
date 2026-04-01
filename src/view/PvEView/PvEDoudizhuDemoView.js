@@ -49,7 +49,13 @@ const saveReplayToBackend = async (replayData) => {
 };
 
 function PvEDoudizhuDemoView() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    const handleLocaleChange = (newLocale) => {
+        localStorage.setItem('LOCALE', newLocale);
+        i18n.changeLanguage(newLocale);
+        setGameStatus('ready');
+    };
 
     // Lazy-initialized ref holding all game data (replaces module-level mutable state)
     const gameDataRef = useRef(null);
@@ -968,6 +974,7 @@ function PvEDoudizhuDemoView() {
                                     toggleFade={toggleFade}
                                     gameStatus={gameStatus}
                                     handleMainPlayerAct={handleMainPlayerAct}
+                                    handleLocaleChange={handleLocaleChange}
                                 />
                             </Paper>
                         </div>
