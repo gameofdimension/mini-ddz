@@ -111,6 +111,16 @@ describe('DoudizhuGameBoard component', () => {
         expect(handleLocaleChange).toHaveBeenCalledWith('zh');
     });
 
+    it('should not crash when handleLocaleChange is not provided', () => {
+        // Reproduces: "handleLocaleChange is not a function" when parent
+        // forgets to pass this prop in localeSelection state
+        const { handleLocaleChange, ...propsWithoutLocale } = defaultProps;
+        expect(() => {
+            render(<DoudizhuGameBoard {...propsWithoutLocale} gameStatus="localeSelection" />);
+            fireEvent.click(screen.getByText('中文开始游戏'));
+        }).not.toThrow();
+    });
+
     it('should call handleMainPlayerAct when play button is clicked with cards selected', () => {
         const handleMainPlayerAct = jest.fn();
         render(<DoudizhuGameBoard {...defaultProps} handleMainPlayerAct={handleMainPlayerAct} selectedCards={['S3']} />);

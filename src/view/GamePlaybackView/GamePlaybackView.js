@@ -72,7 +72,11 @@ function GamePlaybackView({
     const [gameEndDialog, setGameEndDialog] = useState(false);
     const [gameEndDialogText, setGameEndDialogText] = useState('');
     const [fullScreenLoading, setFullScreenLoading] = useState(false);
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    const handleLocaleChange = (newLocale) => {
+        i18n.changeLanguage(newLocale);
+    };
 
     const gameStateTimeoutRef = useRef(null);
     const moveHistoryRef = useRef([]);
@@ -537,6 +541,7 @@ function GamePlaybackView({
                                     runNewTurn={runNewTurn}
                                     toggleFade={gameInfo.toggleFade}
                                     gameStatus={gameInfo.gameStatus}
+                                    handleLocaleChange={handleLocaleChange}
                                     {...gameBoardProps}
                                 />
                             </Paper>

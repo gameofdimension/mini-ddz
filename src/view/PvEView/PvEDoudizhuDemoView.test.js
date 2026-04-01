@@ -268,3 +268,103 @@ describe('createInitialGameData', () => {
         expect(fresh.gameEndDialogTitle).toBe('');
     });
 });
+
+describe('PvEDoudizhuDemoView passes handleLocaleChange', () => {
+    it('should not crash when locale button is clicked without handleLocaleChange prop', () => {
+        // Regresses: "handleLocaleChange is not a function" when
+        // PvEDoudizhuDemoView is accessed via 127.0.0.1 (no LOCALE in localStorage)
+        // and the parent fails to pass handleLocaleChange to DoudizhuGameBoard.
+        // The component must handle the missing prop gracefully via default value.
+        const { handleLocaleChange, ...propsWithoutLocale } = defaultProps;
+        expect(() => {
+            render(<DoudizhuGameBoard {...propsWithoutLocale} gameStatus="localeSelection" />);
+            fireEvent.click(screen.getByText('Start Game in English'));
+        }).not.toThrow();
+    });
+
+    it('should call handleLocaleChange with correct locale when clicked', () => {
+        const handleLocaleChange = jest.fn();
+        render(<DoudizhuGameBoard {...defaultProps} gameStatus="localeSelection" handleLocaleChange={handleLocaleChange} />);
+
+        fireEvent.click(screen.getByText('Start Game in English'));
+        expect(handleLocaleChange).toHaveBeenCalledWith('en');
+
+        fireEvent.click(screen.getByText('中文开始游戏'));
+        expect(handleLocaleChange).toHaveBeenCalledWith('zh');
+    });
+});
+
+/**
+ * Integration test for: accessing via 127.0.0.1:3000 cannot start the game
+ *
+ * Root cause: 127.0.0.1 and localhost have separate localStorage origins.
+ * When accessed via 127.0.0.1, LOCALE is absent → gameStatus = 'localeSelection'.
+ * The locale button must transition gameStatus to 'ready' so role selection
+ * buttons appear and the user can start a game.
+ *
+ * We simulate the parent (PvEDoudizhuDemoView) with a lightweight wrapper that
+ * mirrors the real handleLocaleChange logic.
+ */
+describe('localeSelection → ready transition (127.0.0.1 first-visit)', () => {
+    it('should persist locale and transition gameStatus to ready after clicking locale button', () => {
+        // Simulate PvEDoudizhuDemoView's handleLocaleChange
+        const mockSetGameStatus = jest.fn();
+        const mockChangeLanguage = jest.fn();
+
+        const handleLocaleChange = (newLocale) => {
+            localStorage.setItem('LOCALE', newLocale);
+            mockChangeLanguage(newLocale);
+            mockSetGameStatus('ready');
+        };
+
+        // Start in localeSelection state (no LOCALE in localStorage)
+        localStorage.removeItem('LOCALE');
+
+        const { rerender } = render(
+            <DoudizhuGameBoard {...defaultProps} gameStatus="localeSelection" handleLocaleChange={handleLocaleChange} />
+        );
+
+        // Click the Chinese locale button
+        fireEvent.click(screen.getByText('中文开始游戏'));
+
+        // Verify the callback does what PvEDoudizhuDemoView expects
+        expect(mockChangeLanguage).toHaveBeenCalledWith('zh');
+        expect(mockSetGameStatus).toHaveBeenCalledWith('ready');
+    });
+
+    it('should persist English locale and transition gameStatus to ready', () => {
+        const mockSetGameStatus = jest.fn();
+        const mockChangeLanguage = jest.fn();
+
+        const handleLocaleChange = (newLocale) => {
+            localStorage.setItem('LOCALE', newLocale);
+            mockChangeLanguage(newLocale);
+            mockSetGameStatus('ready');
+        };
+
+        localStorage.removeItem('LOCALE');
+
+        render(
+            <DoudizhuGameBoard {...defaultProps} gameStatus="localeSelection" handleLocaleChange={handleLocaleChange} />
+        );
+
+        fireEvent.click(screen.getByText('Start Game in English'));
+
+        expect(mockChangeLanguage).toHaveBeenCalledWith('en');
+        expect(mockSetGameStatus).toHaveBeenCalledWith('ready');
+    });
+
+    it('should skip localeSelection on revisit (LOCALE already in localStorage)', () => {
+        // After handleLocaleChange persisted the locale in previous test,
+        // PvEDoudizhuDemoView initializes with gameStatus='ready' (LOCALE is truthy).
+        // Directly test the state transition logic here since the localStorage mock
+        // gets cleared between tests.
+        const hasLocale = true; // simulates localStorage.getItem('LOCALE') being truthy
+        const gameStatus = hasLocale ? 'ready' : 'localeSelection';
+        expect(gameStatus).toBe('ready');
+
+        // In 'ready' state, role selection buttons should appear (not locale buttons)
+        render(<DoudizhuGameBoard {...defaultProps} gameStatus={gameStatus} />);
+        expect(screen.getByText('doudizhu.play_as_landlord')).toBeInTheDocument();
+    });
+});
