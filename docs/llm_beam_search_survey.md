@@ -19,7 +19,7 @@
 | Hugging Face Transformers | 强支持（最全） | `generate(num_beams, num_return_sequences, length_penalty, early_stopping, no_repeat_ngram_size...)` | 功能覆盖最完整，便于算法实验；大规模服务吞吐通常不及专用引擎。 |
 | Hugging Face TGI | 非主推（以采样为主） | API 主要聚焦采样参数 | 优势在多租户服务化与易运维；若强依赖 Beam Search，常改用 vLLM/Transformers/TRT-LLM。 |
 | SGLang | 非主推（以高吞吐采样为主） | 常用接口偏采样/并发执行 | 适合高并发生成任务；Beam 需求需要先做版本级能力确认。 |
-| Ollama | 非主推 | 常用接口主要是采样控制 | 本地部署简单，但 Beam Search 可控性和参数覆盖不如专业推理引擎。 |
+| Ollama | 非主推 | 常见 `options` 以采样参数为主（如 temperature、top_p），Beam 相关参数通常无统一入口 | 本地部署简单，但 Beam Search 可控性和参数覆盖不如专业推理引擎。 |
 
 ## vLLM 重点
 
