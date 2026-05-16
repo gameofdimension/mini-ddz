@@ -186,12 +186,11 @@ def main():
 
         move_name = move_type_display(action)
         cards_str = cards_display(action)
-        conf = confidences[0] if confidences is not None and len(confidences) > 0 else 0.0
 
         print(f"    手牌 ({len(current_hands[current_player])}张): {cards_display(current_hands[current_player])}")
         if rival_move:
             print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
-        print(f"    → 出牌: {cards_str}  [{move_name}]  (置信度: {conf:.4f})")
+        print(f"    → 出牌: {cards_str}  [{move_name}]")
 
         if action:
             for card in action:
