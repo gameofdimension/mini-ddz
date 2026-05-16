@@ -10,7 +10,6 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data
 from llm_agent import LLMAgent
-from llm_config import get_llm_config
 from replay_db import delete_replay, get_replay, list_replays, save_replay
 
 app = Flask(__name__)
@@ -36,20 +35,10 @@ _llm_players = None
 
 
 def _get_llm_players():
-    """Get agent list for LLM battle, configurable via LLM_AGENT_POSITIONS env var."""
+    """Get agent list for LLM battle (all three positions use LLMAgent)."""
     global _llm_players
     if _llm_players is None:
-        pretrained_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pretrained", "douzero_pretrained")
-        config = get_llm_config()
-        llm_positions = config["llm_agent_positions"]
-
-        players = []
-        for pos in range(3):
-            if pos in llm_positions:
-                players.append(LLMAgent(pos))
-            else:
-                players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
-        _llm_players = players
+        _llm_players = [LLMAgent(0), LLMAgent(1), LLMAgent(2)]
     return _llm_players
 
 

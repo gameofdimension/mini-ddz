@@ -17,18 +17,11 @@ class TestGetLLMConfig:
         assert config["model"] == "deepseek-v4-flash"
         assert config["timeout"] == 120
         assert config["max_retries"] == 3
-        assert config["llm_agent_positions"] == [0, 1, 2]
-
-    def test_custom_positions(self, monkeypatch):
-        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
-        monkeypatch.setenv("LLM_AGENT_POSITIONS", "0")
-        config = get_llm_config()
-        assert config["llm_agent_positions"] == [0]
 
     def test_custom_model_and_timeout(self, monkeypatch):
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
-        monkeypatch.setenv("LLM_MODEL", "deepseek-v4-flash")
+        monkeypatch.setenv("LLM_MODEL", "deepseek-v4-pro")
         monkeypatch.setenv("LLM_TIMEOUT", "60")
         config = get_llm_config()
-        assert config["model"] == "deepseek-v4-flash"
+        assert config["model"] == "deepseek-v4-pro"
         assert config["timeout"] == 60
