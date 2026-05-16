@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+from unittest.mock import MagicMock, patch
 
 import pytest
 from card_maps import Card2Suit, EnvCard2RealCard, RealCard2EnvCard
@@ -455,3 +456,48 @@ class TestFlaskRoutes:
         data = json.loads(response.data)
         # Database initialized, so delete returns success (0) or error (-1)
         assert "status" in data
+
+
+class TestGenerateLLMBattle:
+    """Test /generate_llm_battle endpoint."""
+
+    def test_generate_llm_battle_with_mock_agents(self, client, monkeypatch, temp_db):
+        """Test LLM battle endpoint with mocked LLMAgent."""
+        import replay_db
+
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        mock_action = [[3], [4], [5]]
+        mock_conf = [0.9, 0.8, 0.7]
+
+        with patch("run_douzero.LLMAgent") as mock_llm:
+            mock_instance = MagicMock()
+            mock_instance.act.return_value = (mock_action, mock_conf)
+            mock_llm.return_value = mock_instance
+
+            response = client.get("/generate_llm_battle")
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            assert data["status"] == 0
+            assert "battle_id" in data
+            assert data["data"]["source"] == "llm_battle"
+            assert "playerInfo" in data["data"]
+            assert "initHands" in data["data"]
+            assert "moveHistory" in data["data"]
+            assert len(data["data"]["playerInfo"]) == 3
+
+    def test_generate_llm_battle_error_handling(self, client, monkeypatch, temp_db):
+        """Test LLM battle endpoint returns error on failure."""
+        import replay_db
+
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        with patch("run_douzero.generate_ai_battle_data", side_effect=RuntimeError("simulated")):
+            response = client.get("/generate_llm_battle")
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            assert data["status"] == -1
