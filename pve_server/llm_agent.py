@@ -16,17 +16,20 @@ logger = logging.getLogger(__name__)
 _FAILURE_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs", "llm_failures")
 
 
-def _save_failed_request(messages: List[Dict[str, str]], error: str, position: int) -> None:
+def _save_failed_request(messages: List[Dict[str, str]], error: str, position: int,
+                         response_content: str | None = None) -> None:
     """Save the LLM request that failed for later analysis."""
     os.makedirs(_FAILURE_LOG_DIR, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     filepath = os.path.join(_FAILURE_LOG_DIR, f"fail_p{position}_{ts}.json")
-    payload = {
+    payload: Dict[str, Any] = {
         "timestamp": ts,
         "position": position,
         "error": error,
         "messages": messages,
     }
+    if response_content is not None:
+        payload["response_content"] = response_content
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     logger.warning("Saved failed request to %s", filepath)
@@ -310,11 +313,12 @@ class LLMAgent:
             *actions* is a list of action-lists (typically one entry) and
             *confidences* is the corresponding list of confidence floats.
         """
+        messages: List[Dict[str, str]] = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": self._build_user_message(infoset)},
+        ]
+        content: Optional[str] = None
         try:
-            messages: List[Dict[str, str]] = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": self._build_user_message(infoset)},
-            ]
             content = self._call_llm(messages)
             action, confidence = self._parse_response(content, infoset.legal_actions)
             return [action], [confidence]
@@ -323,5 +327,5 @@ class LLMAgent:
                 "LLMAgent.act failed for player %d. Falling back.", self.position,
                 exc_info=True,
             )
-            _save_failed_request(messages, str(exc), self.position)
+            _save_failed_request(messages, str(exc), self.position, response_content=content)
             return self._fallback_action(infoset.legal_actions)
