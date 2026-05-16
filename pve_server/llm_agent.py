@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 from card_maps import EnvCard2RealCard, RealCard2EnvCard
 from llm_config import get_llm_config
-from openai import OpenAI
+from openai import APIStatusError, OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -167,11 +167,11 @@ class LLMAgent:
     def _call_llm(self, messages: List[Dict[str, str]]) -> str:
         """Call the DeepSeek API with retries and exponential backoff.
 
-        Retries *max_retries* times (default 3) with delays 1s, 2s, 4s, …
+        Tries up to max_retries times (default 3) with delays 1s, 2s, 4s, …
         Raises the last error if all attempts fail.
         """
         last_error: Optional[Exception] = None
-        total_attempts = self._max_retries + 1  # 1 initial + N retries
+        total_attempts = self._max_retries  # total attempts (1 initial + retries)
 
         for attempt in range(total_attempts):
             try:
@@ -179,7 +179,6 @@ class LLMAgent:
                     model=self._model,
                     messages=messages,
                     response_format={"type": "json_object"},
-                    reasoning_effort="high",
                     extra_body={"thinking": {"type": "enabled"}},
                     timeout=self._timeout,
                 )
@@ -188,8 +187,11 @@ class LLMAgent:
                     raise RuntimeError("LLM returned empty response content")
                 return cast(str, content)
             except Exception as exc:
+                # Only retry on transient errors (5xx, network issues)
+                if isinstance(exc, APIStatusError) and exc.status_code < 500:
+                    raise
                 last_error = exc
-                if attempt < self._max_retries:
+                if attempt < self._max_retries - 1:
                     delay = 2**attempt  # 1, 2, 4, … seconds
                     logger.warning(
                         "LLM API call failed (attempt %d/%d): %s. Retrying in %ds…",
@@ -224,7 +226,7 @@ class LLMAgent:
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON response from LLM: {exc}") from exc
 
-        action_str = data.get("action", "")
+        action_str = data.get("action") or ""
         confidence = data.get("confidence", 0.0)
 
         if not isinstance(action_str, str):

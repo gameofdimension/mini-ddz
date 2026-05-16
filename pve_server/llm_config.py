@@ -1,6 +1,9 @@
 """Configuration for LLMAgent, read from environment variables."""
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def get_llm_config():
@@ -10,6 +13,16 @@ def get_llm_config():
 
     raw_positions = os.environ.get("LLM_AGENT_POSITIONS", "0,1,2")
     llm_positions = [int(p.strip()) for p in raw_positions.split(",")]
+
+    for p in llm_positions:
+        if p not in (0, 1, 2):
+            raise ValueError(
+                f"LLM_AGENT_POSITIONS contains invalid position: {p}. Must be 0, 1, or 2."
+            )
+    if len(set(llm_positions)) < len(llm_positions):
+        logger.warning(
+            "LLM_AGENT_POSITIONS contains duplicate positions: %s", llm_positions
+        )
 
     return {
         "api_key": api_key,
