@@ -13,23 +13,23 @@ from openai import APIStatusError, APITimeoutError, OpenAI
 
 logger = logging.getLogger(__name__)
 
-_TIMEOUT_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs", "llm_timeouts")
+_FAILURE_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs", "llm_failures")
 
 
-def _save_timeout_request(messages: List[Dict[str, str]], error: Exception, position: int) -> None:
-    """Save the LLM request that timed out for later analysis."""
-    os.makedirs(_TIMEOUT_LOG_DIR, exist_ok=True)
+def _save_failed_request(messages: List[Dict[str, str]], error: str, position: int) -> None:
+    """Save the LLM request that failed for later analysis."""
+    os.makedirs(_FAILURE_LOG_DIR, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    filepath = os.path.join(_TIMEOUT_LOG_DIR, f"timeout_p{position}_{ts}.json")
+    filepath = os.path.join(_FAILURE_LOG_DIR, f"fail_p{position}_{ts}.json")
     payload = {
         "timestamp": ts,
         "position": position,
-        "error": str(error),
+        "error": error,
         "messages": messages,
     }
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    logger.warning("Saved timed-out request to %s", filepath)
+    logger.warning("Saved failed request to %s", filepath)
 
 SYSTEM_PROMPT = """You are an expert Dou Dizhu (Chinese Poker) player. Analyze the game state and choose the best move from the provided legal actions.
 
@@ -203,13 +203,13 @@ class LLMAgent:
                     timeout=self._timeout,
                 )
                 content = response.choices[0].message.content
-                if content is None:
+                if not content:
                     raise RuntimeError("LLM returned empty response content")
                 return cast(str, content)
             except Exception as exc:
                 # Save request on timeout for later analysis
                 if isinstance(exc, APITimeoutError):
-                    _save_timeout_request(messages, exc, self.position)
+                    _save_failed_request(messages, str(exc), self.position)
 
                 # Only retry on transient errors (5xx, network issues)
                 if isinstance(exc, APIStatusError) and exc.status_code < 500:
@@ -318,9 +318,10 @@ class LLMAgent:
             content = self._call_llm(messages)
             action, confidence = self._parse_response(content, infoset.legal_actions)
             return [action], [confidence]
-        except Exception:
+        except Exception as exc:
             logger.warning(
                 "LLMAgent.act failed for player %d. Falling back.", self.position,
                 exc_info=True,
             )
+            _save_failed_request(messages, str(exc), self.position)
             return self._fallback_action(infoset.legal_actions)
