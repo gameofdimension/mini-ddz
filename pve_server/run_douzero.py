@@ -7,6 +7,8 @@ import uuid
 from card_maps import EnvCard2RealCard, RealCard2EnvCard
 from deep import DeepAgent
 from flask import Flask, jsonify, request
+from llm_agent import LLMAgent
+from llm_config import get_llm_config
 from flask_cors import CORS
 from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data
 from replay_db import delete_replay, get_replay, list_replays, save_replay
@@ -27,6 +29,21 @@ def _get_players():
             DeepAgent(pos, pretrained_dir, use_onnx=True) for pos in ["landlord", "landlord_down", "landlord_up"]
         ]
     return _players
+
+
+def _get_llm_players():
+    """Get agent list for LLM battle, configurable via LLM_AGENT_POSITIONS env var."""
+    pretrained_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pretrained", "douzero_pretrained")
+    config = get_llm_config()
+    llm_positions = config["llm_agent_positions"]
+
+    players = []
+    for pos in range(3):
+        if pos in llm_positions:
+            players.append(LLMAgent(pos))
+        else:
+            players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
+    return players
 
 
 @app.route("/predict", methods=["POST"])
@@ -195,6 +212,24 @@ def generate_ai_battle():
     except Exception:
         logger.exception("Error in /generate_ai_battle")
         return jsonify({"status": -1, "message": "failed to generate replay"})
+
+
+@app.route("/generate_llm_battle", methods=["GET"])
+def generate_llm_battle():
+    """Generate a replay by running a game with LLM agents."""
+    try:
+        battle_data = generate_ai_battle_data(_get_llm_players())
+        battle_id = str(uuid.uuid4())[:8]
+        battle_data["battle_id"] = battle_id
+        battle_data["source"] = "llm_battle"
+
+        if save_replay(battle_id, battle_data):
+            return jsonify({"status": 0, "message": "success", "battle_id": battle_id, "data": battle_data})
+        else:
+            return jsonify({"status": -1, "message": "failed to save replay"})
+    except Exception:
+        logger.exception("Error in /generate_llm_battle")
+        return jsonify({"status": -1, "message": "failed to generate LLM battle"})
 
 
 @app.route("/save_replay", methods=["POST"])
