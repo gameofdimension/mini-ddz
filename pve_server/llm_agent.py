@@ -14,6 +14,7 @@ from openai import APIStatusError, APITimeoutError, OpenAI
 logger = logging.getLogger(__name__)
 
 _FAILURE_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs", "llm_failures")
+_CALL_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs", "llm_calls")
 
 
 def _save_failed_request(messages: List[Dict[str, str]], error: str, position: int,
@@ -33,6 +34,25 @@ def _save_failed_request(messages: List[Dict[str, str]], error: str, position: i
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     logger.warning("Saved failed request to %s", filepath)
+
+
+def _save_call_log(call_dir: str, call_idx: int, messages: List[Dict[str, str]],
+                   response_content: str | None, elapsed_ms: float, error: str | None) -> None:
+    """Save an LLM API call (request + response) for debugging."""
+    os.makedirs(call_dir, exist_ok=True)
+    filepath = os.path.join(call_dir, f"call_{call_idx:04d}.json")
+    payload: Dict[str, Any] = {
+        "call_index": call_idx,
+        "elapsed_ms": round(elapsed_ms, 1),
+        "messages": messages,
+    }
+    if response_content is not None:
+        payload["response_content"] = response_content
+    if error is not None:
+        payload["error"] = error
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
 
 SYSTEM_PROMPT = """You are an expert Dou Dizhu (Chinese Poker) player. Analyze the game state and choose the best move from the provided legal actions.
 
@@ -89,11 +109,12 @@ class LLMAgent:
     as DeepAgent so it can be used as a drop-in replacement.
     """
 
-    def __init__(self, position: int):
+    def __init__(self, position: int, debug_log: bool = False):
         """Initialise the agent for the given player position.
 
         Args:
             position: 0 for landlord, 1 for landlord_down, 2 for landlord_up.
+            debug_log: if True, save every API call (request+response) to disk.
         """
         if position not in (0, 1, 2):
             raise ValueError(f"Invalid position {position}, must be 0, 1, or 2")
@@ -108,6 +129,13 @@ class LLMAgent:
         self._timeout = config["timeout"]
         self._max_retries = config["max_retries"]
         self.fallback_count = 0
+        self._call_count = 0
+
+        if debug_log:
+            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            self._call_dir = os.path.join(_CALL_LOG_DIR, f"p{position}_{ts}")
+        else:
+            self._call_dir = None
 
     # ------------------------------------------------------------------
     # Card encoding helpers
@@ -201,6 +229,7 @@ class LLMAgent:
         total_attempts = self._max_retries  # total attempts (1 initial + retries)
 
         for attempt in range(total_attempts):
+            t0 = time.time()
             try:
                 response = self._client.chat.completions.create(
                     model=self._model,
@@ -212,6 +241,10 @@ class LLMAgent:
                 content = response.choices[0].message.content
                 if not content:
                     raise RuntimeError("LLM returned empty response content")
+                if self._call_dir is not None:
+                    elapsed = (time.time() - t0) * 1000
+                    self._call_count += 1
+                    _save_call_log(self._call_dir, self._call_count, messages, cast(str, content), elapsed, None)
                 return cast(str, content)
             except Exception as exc:
                 # Save request on timeout for later analysis
@@ -234,6 +267,10 @@ class LLMAgent:
                     time.sleep(delay)
 
         assert last_error is not None
+        if self._call_dir is not None:
+            elapsed = (time.time() - t0) * 1000
+            self._call_count += 1
+            _save_call_log(self._call_dir, self._call_count, messages, None, elapsed, str(last_error))
         raise last_error
 
     # ------------------------------------------------------------------

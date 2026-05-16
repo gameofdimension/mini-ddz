@@ -216,6 +216,8 @@ def main():
     parser.add_argument("--up", choices=["llm", "deep", "random"], default="llm")
     parser.add_argument("--compact", action="store_true",
                         help="Suppress per-turn output, only show summary")
+    parser.add_argument("--log-llm-calls", action="store_true",
+                        help="Save every LLM API request and response to logs/llm_calls/")
     parser.add_argument("--rounds", type=int, default=1,
                         help="Number of games to run (default: 1)")
     args = parser.parse_args()
@@ -231,7 +233,7 @@ def main():
         pos = ROLE_POSITIONS[role_key]
         agent_type = agent_map[role_key]
         if agent_type == "llm":
-            players.append(LLMAgent(pos))
+            players.append(LLMAgent(pos, debug_log=args.log_llm_calls))
         elif agent_type == "deep":
             players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
         else:
