@@ -40,8 +40,8 @@ Each card is a single character: 3, 4, 5, 6, 7, 8, 9, T(10), J, Q, K, A, 2, X(Sm
 - 54-card deck. 3 players: one landlord (20 cards) vs two peasants (17 cards each).
 - Card ranks (low to high): 3 < 4 < 5 < 6 < 7 < 8 < 9 < T < J < Q < K < A < 2 < X < D
 - Move types: single, pair, triple, triple+single, triple+pair, bomb (4 of a kind), king bomb (X+D), serial single (5+ consecutive), serial pair (3+ consecutive pairs), serial triple (2+ consecutive triples), serial triple+single, serial triple+pair, four+two singles, four+two pairs.
-- You must beat the last opponent move with a higher move of the same type, OR play a bomb/king bomb to override. Bombs beat non-bomb moves. King bomb beats all.
-- You may pass even if you have a legal move.
+- To beat the last opponent move, play a higher-ranked combination of the same move type, OR a bomb (4 of a kind) / king bomb (X+D). Bombs beat non-bomb moves. King bomb beats all.
+- "pass" in the legal actions list means you may skip. If "pass" is NOT in the list, you MUST play a card combination from the list.
 - Goal: be the first to empty your hand.
 
 ## Output Format
