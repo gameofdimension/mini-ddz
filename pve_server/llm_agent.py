@@ -3,12 +3,11 @@
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
-
-from openai import OpenAI
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from card_maps import EnvCard2RealCard, RealCard2EnvCard
 from llm_config import get_llm_config
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +183,10 @@ class LLMAgent:
                     extra_body={"thinking": {"type": "enabled"}},
                     timeout=self._timeout,
                 )
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                if content is None:
+                    raise RuntimeError("LLM returned empty response content")
+                return cast(str, content)
             except Exception as exc:
                 last_error = exc
                 if attempt < self._max_retries:
