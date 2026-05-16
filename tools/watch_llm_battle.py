@@ -195,7 +195,11 @@ def main():
         print(f"    手牌 ({len(current_hands[current_player])}张): {cards_display(current_hands[current_player])}")
         if rival_move:
             print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
-        print(f"{HL}    → 出牌: {cards_str}  [{move_name}]{RST}")
+        action_line = f"    → 出牌: {cards_str}  [{move_name}]"
+        if not is_llm:
+            conf = confidences[0] if confidences is not None and len(confidences) > 0 else 0.0
+            action_line += f"  (预期收益: {conf:.4f})"
+        print(f"{HL}{action_line}{RST}")
 
         if action:
             for card in action:
