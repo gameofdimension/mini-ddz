@@ -147,6 +147,11 @@ def run_one_game(players, verbose=True):
         actions, confidences = players[current_player].act(infoset)
         action = actions[0] if actions else []
 
+        if not verbose:
+            if is_llm:
+                sys.stderr.write(f"\r  LLM thinking (turn {turn + 1}, {len(legal_actions)} actions)...")
+                sys.stderr.flush()
+
         if is_llm and verbose:
             elapsed = time.time() - t0
             print(f"    思考耗时: {elapsed:.1f}s")
@@ -276,6 +281,10 @@ def main():
         total_turns += turns
         for pos, count in fallbacks.items():
             total_fallbacks[pos] = total_fallbacks.get(pos, 0) + count
+
+        if not verbose:
+            sys.stderr.write("\r" + " " * 50 + "\r")
+            sys.stderr.flush()
 
         if args.rounds > 1 or args.compact:
             winner_label = "地主" if winner == 0 else "农民" if winner in (1, 2) else "超时"
