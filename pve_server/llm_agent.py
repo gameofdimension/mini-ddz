@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 from card_maps import EnvCard2RealCard, RealCard2EnvCard
@@ -21,7 +21,7 @@ def _save_failed_request(messages: List[Dict[str, str]], error: str, position: i
                          response_content: str | None = None) -> None:
     """Save the LLM request that failed for later analysis."""
     os.makedirs(_FAILURE_LOG_DIR, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now().strftime("%Y%m%dT%H%M%SZ")
     filepath = os.path.join(_FAILURE_LOG_DIR, f"fail_p{position}_{ts}.json")
     payload: Dict[str, Any] = {
         "timestamp": ts,
@@ -131,7 +131,7 @@ class LLMAgent:
 
     def start_call_log(self) -> None:
         """Begin logging every API call (request+response) to a new JSONL file."""
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        ts = datetime.now().strftime("%Y%m%dT%H%M%S")
         self._call_log_path = os.path.join(_CALL_LOG_DIR, f"p{self.position}_{ts}.jsonl")
         self._call_count = 0
 
