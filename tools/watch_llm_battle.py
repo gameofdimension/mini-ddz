@@ -18,6 +18,7 @@ from deck import _assign_card_suits, _deal_cards
 from deep import DeepAgent
 from game import InfoSet, _get_legal_card_play_actions
 from llm_agent import LLMAgent
+from random_agent import RandomAgent
 
 from utils import move_detector as md
 
@@ -126,11 +127,18 @@ def run_one_game(players, verbose=True):
         infoset.legal_actions = legal_actions
 
         is_llm = isinstance(players[current_player], LLMAgent)
+        is_random = isinstance(players[current_player], RandomAgent)
+        is_ai = is_llm or is_random
 
         if verbose:
-            HL = "\033[1;36m" if is_llm else ""
-            RST = "\033[0m" if is_llm else ""
-            agent_type = "LLM" if is_llm else "Deep"
+            HL = "\033[1;36m" if is_ai else ""
+            RST = "\033[0m" if is_ai else ""
+            if is_llm:
+                agent_type = "LLM"
+            elif is_random:
+                agent_type = "RND"
+            else:
+                agent_type = "Deep"
             print(f"{HL}--- 第 {turn + 1} 回合: {ROLE_NAMES[current_player]} [{agent_type}] ---{RST}")
             if is_llm:
                 print(f"    正在思考 ({len(legal_actions)} 个合法动作)...")
@@ -148,7 +156,7 @@ def run_one_game(players, verbose=True):
             if rival_move:
                 print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
             action_line = f"    → 出牌: {cards_display(action)}  [{move_type_display(action)}]"
-            if not is_llm:
+            if not is_ai:
                 conf = confidences[0] if confidences is not None and len(confidences) > 0 else 0.0
                 action_line += f"  (预期收益: {conf:.4f})"
             HL2 = "\033[1;36m" if is_llm else ""
@@ -187,13 +195,13 @@ def run_one_game(players, verbose=True):
                 print(f"  总回合数: {turn + 1}")
                 print(f"  炸弹数: {bomb_num}")
                 print("=" * 60)
-            fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent)}
+            fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent) and p.fallback_count > 0}
             return current_player, turn + 1, bomb_num, fallbacks
 
         current_player = (current_player + 1) % 3
         turn += 1
 
-    fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent)}
+    fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent) and p.fallback_count > 0}
     return -1, turn, bomb_num, fallbacks
 
 
@@ -203,9 +211,9 @@ def run_one_game(players, verbose=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Watch a live Dou Dizhu battle")
-    parser.add_argument("--landlord", choices=["llm", "deep"], default="llm")
-    parser.add_argument("--down", choices=["llm", "deep"], default="llm")
-    parser.add_argument("--up", choices=["llm", "deep"], default="llm")
+    parser.add_argument("--landlord", choices=["llm", "deep", "random"], default="llm")
+    parser.add_argument("--down", choices=["llm", "deep", "random"], default="llm")
+    parser.add_argument("--up", choices=["llm", "deep", "random"], default="llm")
     parser.add_argument("--compact", action="store_true",
                         help="Suppress per-turn output, only show summary")
     parser.add_argument("--rounds", type=int, default=1,
@@ -221,10 +229,13 @@ def main():
     players = []
     for role_key in ("landlord", "down", "up"):
         pos = ROLE_POSITIONS[role_key]
-        if agent_map[role_key] == "llm":
+        agent_type = agent_map[role_key]
+        if agent_type == "llm":
             players.append(LLMAgent(pos))
-        else:
+        elif agent_type == "deep":
             players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
+        else:
+            players.append(RandomAgent(pos))
 
     if verbose:
         print("=" * 60)
@@ -232,7 +243,12 @@ def main():
         print("=" * 60)
         print()
         for i, p in enumerate(players):
-            agent_label = "LLMAgent 🤖" if isinstance(p, LLMAgent) else "DeepAgent 🧠"
+            if isinstance(p, LLMAgent):
+                agent_label = "LLMAgent 🤖"
+            elif isinstance(p, RandomAgent):
+                agent_label = "RandomAgent 🎲"
+            else:
+                agent_label = "DeepAgent 🧠"
             print(f"  {ROLE_NAMES[i]:　<6} (Player {i}): {agent_label}")
         print()
 
@@ -245,7 +261,7 @@ def main():
     for r in range(args.rounds):
         # Reset fallback counters between rounds
         for p in players:
-            if isinstance(p, LLMAgent):
+            if hasattr(p, "fallback_count"):
                 p.fallback_count = 0
 
         if args.rounds > 1:
@@ -277,7 +293,8 @@ def main():
             if fallbacks:
                 fb_parts = [f"{ROLE_NAMES[p]}:{c}" for p, c in fallbacks.items()]
                 fb_str = f", LLM兜底: {{{', '.join(fb_parts)}}}"
-            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s{fb_str}")
+            rnd_str = " [含随机]" if any(isinstance(p, RandomAgent) for p in players) else ""
+            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s{fb_str}{rnd_str}")
 
     if args.rounds > 1:
         print(f"\n{'=' * 50}")
