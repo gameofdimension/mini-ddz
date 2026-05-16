@@ -107,12 +107,11 @@ class LLMAgent:
     as DeepAgent so it can be used as a drop-in replacement.
     """
 
-    def __init__(self, position: int, debug_log: bool = False):
+    def __init__(self, position: int):
         """Initialise the agent for the given player position.
 
         Args:
             position: 0 for landlord, 1 for landlord_down, 2 for landlord_up.
-            debug_log: if True, save every API call (request+response) to disk.
         """
         if position not in (0, 1, 2):
             raise ValueError(f"Invalid position {position}, must be 0, 1, or 2")
@@ -128,12 +127,13 @@ class LLMAgent:
         self._max_retries = config["max_retries"]
         self.fallback_count = 0
         self._call_count = 0
+        self._call_log_path: Optional[str] = None
 
-        if debug_log:
-            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-            self._call_log_path = os.path.join(_CALL_LOG_DIR, f"p{position}_{ts}.jsonl")
-        else:
-            self._call_log_path = None
+    def start_call_log(self) -> None:
+        """Begin logging every API call (request+response) to a new JSONL file."""
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        self._call_log_path = os.path.join(_CALL_LOG_DIR, f"p{self.position}_{ts}.jsonl")
+        self._call_count = 0
 
     # ------------------------------------------------------------------
     # Card encoding helpers

@@ -244,15 +244,13 @@ def main():
     def _make_player(pos, role_key):
         agent_type = agent_map[role_key]
         if agent_type == "llm":
-            return LLMAgent(pos, debug_log=args.log_llm_calls)
+            return LLMAgent(pos)
         elif agent_type == "deep":
             return DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True)
         else:
             return RandomAgent(pos)
 
     agent_map = {"landlord": args.landlord, "down": args.down, "up": args.up}
-
-    # Build initial players (rebuilt per round when logging is on)
     players = [_make_player(ROLE_POSITIONS[k], k) for k in ("landlord", "down", "up")]
 
     if verbose:
@@ -281,12 +279,11 @@ def main():
         return agent_map[role_key]
 
     for r in range(args.rounds):
-        if args.log_llm_calls:
-            players = [_make_player(ROLE_POSITIONS[k], k) for k in ("landlord", "down", "up")]
-        else:
-            for p in players:
-                if hasattr(p, "fallback_count"):
-                    p.fallback_count = 0
+        for p in players:
+            if hasattr(p, "fallback_count"):
+                p.fallback_count = 0
+            if args.log_llm_calls and hasattr(p, "start_call_log"):
+                p.start_call_log()
 
         if args.rounds > 1:
             print(f"\n[Round {r + 1}/{args.rounds}]")
