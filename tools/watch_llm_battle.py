@@ -147,13 +147,14 @@ def run_one_game(players, verbose=True):
         actions, confidences = players[current_player].act(infoset)
         action = actions[0] if actions else []
 
-        # Defensive: validate action against legal_actions
         if action not in legal_actions:
-            import random as _random
-            print(f"\n  ⚠ ILLEGAL ACTION: {cards_display(action)} not in legal_actions", file=sys.stderr)
-            action = _random.choice(legal_actions) if legal_actions else []
-            actions = [action]
-            confidences = [0.0]
+            raise RuntimeError(
+                f"ILLEGAL ACTION: {cards_display(action)} not in legal_actions. "
+                f"Player {current_player} ({ROLE_NAMES[current_player]}), turn {turn + 1}. "
+                f"rival_move: {cards_display(rival_move)}. "
+                f"hand: {cards_display(current_hands[current_player])}. "
+                f"legal: {[cards_display(a) for a in legal_actions]}"
+            )
 
         if not verbose:
             if is_llm:
@@ -286,7 +287,12 @@ def main():
             print(f"\n[Round {r + 1}/{args.rounds}]")
 
         t0 = time.time()
-        winner, turns, bombs, fallbacks = run_one_game(players, verbose=verbose)
+        try:
+            winner, turns, bombs, fallbacks = run_one_game(players, verbose=verbose)
+        except RuntimeError as e:
+            elapsed = time.time() - t0
+            print(f"\n  ❌ ILLEGAL ACTION DETECTED, aborting round: {e}", file=sys.stderr)
+            continue
         elapsed = time.time() - t0
         total_time += elapsed
         total_turns += turns
