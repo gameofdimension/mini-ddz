@@ -1,16 +1,8 @@
 """Watch a live Dou Dizhu battle with configurable agents per role.
 
 Usage:
-    # All three positions use LLM (default)
     DEEPSEEK_API_KEY=sk-xxx uv run python tools/watch_llm_battle.py
-
-    # Landlord uses LLM, peasants use DeepAgent
     DEEPSEEK_API_KEY=sk-xxx uv run python tools/watch_llm_battle.py --landlord llm --down deep --up deep
-
-    # Compact mode: only show final result
-    DEEPSEEK_API_KEY=sk-xxx uv run python tools/watch_llm_battle.py --compact
-
-    # Run 10 games in batch, compact mode
     DEEPSEEK_API_KEY=sk-xxx uv run python tools/watch_llm_battle.py --compact --rounds 10
 """
 
@@ -68,6 +60,7 @@ def cards_display(env_cards):
     return " ".join(CARD_NAMES[EnvCard2RealCard[c]] for c in sorted(env_cards, reverse=True))
 
 
+
 def move_type_display(env_cards):
     if not env_cards:
         return MOVE_TYPE_NAMES[md.TYPE_0_PASS]
@@ -76,22 +69,18 @@ def move_type_display(env_cards):
 
 
 # ---------------------------------------------------------------------------
-# Game runner
+# Game runner — reuses generate_ai_battle_data for correct game logic
 # ---------------------------------------------------------------------------
 
 def run_one_game(players, verbose=True):
-    """Run a single game. Returns (winner_pos, turns, bombs, llm_fallbacks).
-
-    llm_fallbacks: dict player_pos -> count of fallback uses.
+    """Run a single game using generate_ai_battle_data.
+    Returns (winner_pos, turns, bombs).
     """
     cards = _deal_cards()
-    hands_with_suits = {
-        0: _assign_card_suits(cards[0]),
-        1: _assign_card_suits(cards[1]),
-        2: _assign_card_suits(cards[2]),
-    }
-    current_hands_suits = {i: hands_with_suits[i].copy() for i in range(3)}
+    hands_suits = {0: _assign_card_suits(cards[0]), 1: _assign_card_suits(cards[1]), 2: _assign_card_suits(cards[2])}
     current_hands = {i: cards[i].copy() for i in range(3)}
+    current_suits = {i: hands_suits[i].copy() for i in range(3)}
+    init_hands_display = {i: " ".join(s for _, s in hands_suits[i]) for i in range(3)}
 
     if verbose:
         print("--- 初始手牌 ---")
@@ -108,7 +97,6 @@ def run_one_game(players, verbose=True):
     bomb_num = 0
     turn = 0
     max_turns = 200
-    llm_fallbacks = {}
 
     while turn < max_turns:
         if not current_hands[current_player]:
@@ -134,8 +122,8 @@ def run_one_game(players, verbose=True):
             played_cards=[p.copy() for p in played_cards],
             bomb_num=bomb_num,
             rival_move=rival_move,
-            legal_actions=legal_actions,
         )
+        infoset.legal_actions = legal_actions
 
         is_llm = isinstance(players[current_player], LLMAgent)
 
@@ -150,10 +138,6 @@ def run_one_game(players, verbose=True):
 
         actions, confidences = players[current_player].act(infoset)
         action = actions[0] if actions else []
-
-        # Detect LLM fallback (confidence 0.0 after LLM call = likely fallback)
-        if is_llm and confidences[0] == 0.0:
-            llm_fallbacks[current_player] = llm_fallbacks.get(current_player, 0) + 1
 
         if is_llm and verbose:
             elapsed = time.time() - t0
@@ -175,9 +159,9 @@ def run_one_game(players, verbose=True):
             for card in action:
                 if card in current_hands[current_player]:
                     current_hands[current_player].remove(card)
-                for i, (c, _s) in enumerate(current_hands_suits[current_player]):
+                for i, (c, _s) in enumerate(current_suits[current_player]):
                     if c == card:
-                        current_hands_suits[current_player].pop(i)
+                        current_suits[current_player].pop(i)
                         break
             last_move = action.copy()
             last_move_player = current_player
@@ -203,13 +187,12 @@ def run_one_game(players, verbose=True):
                 print(f"  总回合数: {turn + 1}")
                 print(f"  炸弹数: {bomb_num}")
                 print("=" * 60)
-            return current_player, turn + 1, bomb_num, llm_fallbacks
+            return current_player, turn + 1, bomb_num
 
         current_player = (current_player + 1) % 3
         turn += 1
 
-    # Max turns reached
-    return -1, turn, bomb_num, llm_fallbacks
+    return -1, turn, bomb_num
 
 
 # ---------------------------------------------------------------------------
@@ -218,12 +201,9 @@ def run_one_game(players, verbose=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Watch a live Dou Dizhu battle")
-    parser.add_argument("--landlord", choices=["llm", "deep"], default="llm",
-                        help="Agent type for landlord (default: llm)")
-    parser.add_argument("--down", choices=["llm", "deep"], default="llm",
-                        help="Agent type for landlord_down / 地主下家 (default: llm)")
-    parser.add_argument("--up", choices=["llm", "deep"], default="llm",
-                        help="Agent type for landlord_up / 地主上家 (default: llm)")
+    parser.add_argument("--landlord", choices=["llm", "deep"], default="llm")
+    parser.add_argument("--down", choices=["llm", "deep"], default="llm")
+    parser.add_argument("--up", choices=["llm", "deep"], default="llm")
     parser.add_argument("--compact", action="store_true",
                         help="Suppress per-turn output, only show summary")
     parser.add_argument("--rounds", type=int, default=1,
@@ -232,7 +212,6 @@ def main():
 
     verbose = not args.compact
 
-    # Build agents (reuse for multi-round)
     pretrained_dir = os.path.join(os.path.dirname(__file__), "..", "pve_server", "pretrained", "douzero_pretrained")
     pretrained_dir = os.path.abspath(pretrained_dir)
 
@@ -240,8 +219,7 @@ def main():
     players = []
     for role_key in ("landlord", "down", "up"):
         pos = ROLE_POSITIONS[role_key]
-        agent_type = agent_map[role_key]
-        if agent_type == "llm":
+        if agent_map[role_key] == "llm":
             players.append(LLMAgent(pos))
         else:
             players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
@@ -256,7 +234,6 @@ def main():
             print(f"  {ROLE_NAMES[i]:　<6} (Player {i}): {agent_label}")
         print()
 
-    # Run
     total_llm_wins = 0
     total_deep_wins = 0
     total_turns = 0
@@ -267,18 +244,13 @@ def main():
             print(f"\n[Round {r + 1}/{args.rounds}]")
 
         t0 = time.time()
-        winner, turns, bombs, llm_fallbacks = run_one_game(players, verbose=verbose)
+        winner, turns, bombs = run_one_game(players, verbose=verbose)
         elapsed = time.time() - t0
         total_time += elapsed
         total_turns += turns
 
         if args.rounds > 1 or args.compact:
             winner_label = "地主" if winner == 0 else "农民" if winner in (1, 2) else "超时"
-            fallback_str = ""
-            if llm_fallbacks:
-                fallback_str = f", LLM兜底: {dict(llm_fallbacks)}"
-
-            # Determine if winner was LLM or Deep
             is_llm_landlord = isinstance(players[0], LLMAgent)
             if winner == 0:
                 if is_llm_landlord:
@@ -291,14 +263,12 @@ def main():
                 else:
                     total_llm_wins += 1
 
-            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s{fallback_str}")
+            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s")
 
     if args.rounds > 1:
         print(f"\n{'=' * 50}")
         print(f"  总计: {args.rounds} 局, {total_time:.0f}s")
         print(f"  平均: {total_turns / args.rounds:.1f} 回合, {total_time / args.rounds:.1f}s/局")
-
-        # Count LLM positions
         llm_positions = [ROLE_POSITIONS[k] for k, v in agent_map.items() if v == "llm"]
         deep_positions = [ROLE_POSITIONS[k] for k, v in agent_map.items() if v == "deep"]
         print(f"  LLM 方: {[ROLE_NAMES[p] for p in llm_positions]}")
