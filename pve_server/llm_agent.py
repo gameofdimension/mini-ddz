@@ -36,11 +36,10 @@ def _save_failed_request(messages: List[Dict[str, str]], error: str, position: i
     logger.warning("Saved failed request to %s", filepath)
 
 
-def _save_call_log(call_dir: str, call_idx: int, messages: List[Dict[str, str]],
+def _save_call_log(filepath: str, call_idx: int, messages: List[Dict[str, str]],
                    response_content: str | None, elapsed_ms: float, error: str | None) -> None:
-    """Save an LLM API call (request + response) for debugging."""
-    os.makedirs(call_dir, exist_ok=True)
-    filepath = os.path.join(call_dir, f"call_{call_idx:04d}.json")
+    """Append one LLM API call to a JSONL log file."""
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     payload: Dict[str, Any] = {
         "call_index": call_idx,
         "elapsed_ms": round(elapsed_ms, 1),
@@ -50,8 +49,8 @@ def _save_call_log(call_dir: str, call_idx: int, messages: List[Dict[str, str]],
         payload["response_content"] = response_content
     if error is not None:
         payload["error"] = error
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
+    with open(filepath, "a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
 SYSTEM_PROMPT = """You are an expert Dou Dizhu (Chinese Poker) player. Analyze the game state and choose the best move from the provided legal actions.
@@ -133,9 +132,9 @@ class LLMAgent:
 
         if debug_log:
             ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-            self._call_dir = os.path.join(_CALL_LOG_DIR, f"p{position}_{ts}")
+            self._call_log_path = os.path.join(_CALL_LOG_DIR, f"p{position}_{ts}.jsonl")
         else:
-            self._call_dir = None
+            self._call_log_path = None
 
     # ------------------------------------------------------------------
     # Card encoding helpers
@@ -241,10 +240,10 @@ class LLMAgent:
                 content = response.choices[0].message.content
                 if not content:
                     raise RuntimeError("LLM returned empty response content")
-                if self._call_dir is not None:
+                if self._call_log_path is not None:
                     elapsed = (time.time() - t0) * 1000
                     self._call_count += 1
-                    _save_call_log(self._call_dir, self._call_count, messages, cast(str, content), elapsed, None)
+                    _save_call_log(self._call_log_path, self._call_count, messages, cast(str, content), elapsed, None)
                 return cast(str, content)
             except Exception as exc:
                 # Save request on timeout for later analysis
@@ -267,10 +266,10 @@ class LLMAgent:
                     time.sleep(delay)
 
         assert last_error is not None
-        if self._call_dir is not None:
+        if self._call_log_path is not None:
             elapsed = (time.time() - t0) * 1000
             self._call_count += 1
-            _save_call_log(self._call_dir, self._call_count, messages, None, elapsed, str(last_error))
+            _save_call_log(self._call_log_path, self._call_count, messages, None, elapsed, str(last_error))
         raise last_error
 
     # ------------------------------------------------------------------
