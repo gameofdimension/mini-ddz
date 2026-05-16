@@ -259,14 +259,17 @@ def main():
             print(f"  {ROLE_NAMES[i]:　<6} (Player {i}): {agent_label}")
         print()
 
-    total_llm_wins = 0
-    total_deep_wins = 0
     total_turns = 0
     total_time = 0.0
     total_fallbacks = {}
+    win_counts = {}  # agent_type -> count, e.g. {"llm": 3, "deep": 2, "random": 1}
+
+    def _agent_name(pos):
+        """Return the agent type name for a position: llm, deep, or random."""
+        role_key = {0: "landlord", 1: "down", 2: "up"}[pos]
+        return agent_map[role_key]
 
     for r in range(args.rounds):
-        # Reset fallback counters between rounds
         for p in players:
             if hasattr(p, "fallback_count"):
                 p.fallback_count = 0
@@ -286,36 +289,38 @@ def main():
             sys.stderr.write("\r" + " " * 50 + "\r")
             sys.stderr.flush()
 
-        if args.rounds > 1 or args.compact:
-            winner_label = "地主" if winner == 0 else "农民" if winner in (1, 2) else "超时"
-            is_llm_landlord = isinstance(players[0], LLMAgent)
-            if winner == 0:
-                if is_llm_landlord:
-                    total_llm_wins += 1
-                else:
-                    total_deep_wins += 1
-            elif winner in (1, 2):
-                if is_llm_landlord:
-                    total_deep_wins += 1
-                else:
-                    total_llm_wins += 1
+        # Track wins by agent type
+        if winner in (0, 1, 2):
+            winner_type = _agent_name(winner)
+            win_counts[winner_type] = win_counts.get(winner_type, 0) + 1
 
+        if args.rounds > 1 or args.compact:
+            if elapsed < 1:
+                time_str = f"{elapsed * 1000:.0f}ms"
+            else:
+                time_str = f"{elapsed:.1f}s"
+            winner_label = "地主" if winner == 0 else "农民" if winner in (1, 2) else "超时"
             fb_str = ""
             if fallbacks:
                 fb_parts = [f"{ROLE_NAMES[p]}:{c}" for p, c in fallbacks.items()]
                 fb_str = f", LLM兜底: {{{', '.join(fb_parts)}}}"
-            rnd_str = " [含随机]" if any(isinstance(p, RandomAgent) for p in players) else ""
-            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s{fb_str}{rnd_str}")
+            print(f"  #{r + 1}: {winner_label}胜 ({_agent_name(winner) if winner >= 0 else 'n/a'}), {turns}回合, {bombs}炸, {time_str}{fb_str}")
 
     if args.rounds > 1:
+        if total_time < 1:
+            total_str = f"{total_time * 1000:.0f}ms"
+            avg_str = f"{total_time / args.rounds * 1000:.0f}ms/局"
+        else:
+            total_str = f"{total_time:.0f}s"
+            avg_str = f"{total_time / args.rounds:.1f}s/局"
         print(f"\n{'=' * 50}")
-        print(f"  总计: {args.rounds} 局, {total_time:.0f}s")
-        print(f"  平均: {total_turns / args.rounds:.1f} 回合, {total_time / args.rounds:.1f}s/局")
-        llm_positions = [ROLE_POSITIONS[k] for k, v in agent_map.items() if v == "llm"]
-        deep_positions = [ROLE_POSITIONS[k] for k, v in agent_map.items() if v == "deep"]
-        print(f"  LLM 方: {[ROLE_NAMES[p] for p in llm_positions]}")
-        print(f"  Deep 方: {[ROLE_NAMES[p] for p in deep_positions]}")
-        print(f"  LLM 方胜: {total_llm_wins}, Deep 方胜: {total_deep_wins}")
+        print(f"  总计: {args.rounds} 局, {total_str}")
+        print(f"  平均: {total_turns / args.rounds:.1f} 回合, {avg_str}")
+        for role_key in ("landlord", "down", "up"):
+            pos = ROLE_POSITIONS[role_key]
+            print(f"  {ROLE_NAMES[pos]} ({agent_map[role_key]})")
+        win_parts = [f"{t}:{c}" for t, c in sorted(win_counts.items())]
+        print(f"  胜率: {{{', '.join(win_parts)}}}")
         if total_fallbacks:
             fb_parts = [f"{ROLE_NAMES[p]}:{c}" for p, c in total_fallbacks.items()]
             print(f"  LLM 兜底总计: {{{', '.join(fb_parts)}}}")
