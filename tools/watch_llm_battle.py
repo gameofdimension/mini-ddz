@@ -171,7 +171,12 @@ def main():
         is_llm = isinstance(players[current_player], LLMAgent)
         agent_type = "LLM" if is_llm else "Deep"
 
-        print(f"--- 第 {turn + 1} 回合: {ROLE_NAMES[current_player]} [{agent_type}] ---")
+        # ANSI highlight for LLM moves
+        HL = "\033[1;36m" if is_llm else ""   # bold cyan
+        RST = "\033[0m" if is_llm else ""
+
+        turn_header = f"--- 第 {turn + 1} 回合: {ROLE_NAMES[current_player]} [{agent_type}] ---"
+        print(f"{HL}{turn_header}{RST}")
 
         if is_llm:
             print(f"    正在思考 ({len(legal_actions)} 个合法动作)...")
@@ -190,7 +195,7 @@ def main():
         print(f"    手牌 ({len(current_hands[current_player])}张): {cards_display(current_hands[current_player])}")
         if rival_move:
             print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
-        print(f"    → 出牌: {cards_str}  [{move_name}]")
+        print(f"{HL}    → 出牌: {cards_str}  [{move_name}]{RST}")
 
         if action:
             for card in action:
