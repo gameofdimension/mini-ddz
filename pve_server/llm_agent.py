@@ -70,8 +70,7 @@ Each card is a single character: 3, 4, 5, 6, 7, 8, 9, T(10), J, Q, K, A, 2, X(Sm
 Respond with a JSON object only:
 {"analysis": "brief strategy reasoning", "action": "<card_string>", "confidence": 0.0-1.0}
 
-- "action": concatenated card codes for the chosen move, e.g. "345" for a 3-4-5 straight, "33" for a pair of 3s.
-- "action": "" (empty string) for pass.
+- "action": concatenated card codes for the chosen move, e.g. "345" for a 3-4-5 straight, "33" for a pair of 3s, "pass" for skip.
 - Pick ONLY from the provided legal actions list."""
 
 USER_MESSAGE_TEMPLATE = """## Players
