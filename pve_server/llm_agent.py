@@ -104,6 +104,7 @@ class LLMAgent:
         self._model = config["model"]
         self._timeout = config["timeout"]
         self._max_retries = config["max_retries"]
+        self.fallback_count = 0
 
     # ------------------------------------------------------------------
     # Card encoding helpers
@@ -298,6 +299,7 @@ class LLMAgent:
             "Legal actions: %s",
             [self._env_action_to_str(a) for a in legal_actions],
         )
+        self.fallback_count += 1
         fallback = legal_actions[0] if legal_actions else []
         return [fallback], [0.0]
 

@@ -73,8 +73,8 @@ def move_type_display(env_cards):
 # ---------------------------------------------------------------------------
 
 def run_one_game(players, verbose=True):
-    """Run a single game using generate_ai_battle_data.
-    Returns (winner_pos, turns, bombs).
+    """Run a single game. Returns (winner_pos, turns, bombs, fallbacks).
+    fallbacks: dict player_pos -> count of LLM fallback uses.
     """
     cards = _deal_cards()
     hands_suits = {0: _assign_card_suits(cards[0]), 1: _assign_card_suits(cards[1]), 2: _assign_card_suits(cards[2])}
@@ -187,12 +187,14 @@ def run_one_game(players, verbose=True):
                 print(f"  总回合数: {turn + 1}")
                 print(f"  炸弹数: {bomb_num}")
                 print("=" * 60)
-            return current_player, turn + 1, bomb_num
+            fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent)}
+            return current_player, turn + 1, bomb_num, fallbacks
 
         current_player = (current_player + 1) % 3
         turn += 1
 
-    return -1, turn, bomb_num
+    fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent)}
+    return -1, turn, bomb_num, fallbacks
 
 
 # ---------------------------------------------------------------------------
@@ -238,16 +240,24 @@ def main():
     total_deep_wins = 0
     total_turns = 0
     total_time = 0.0
+    total_fallbacks = {}
 
     for r in range(args.rounds):
+        # Reset fallback counters between rounds
+        for p in players:
+            if isinstance(p, LLMAgent):
+                p.fallback_count = 0
+
         if args.rounds > 1:
             print(f"\n[Round {r + 1}/{args.rounds}]")
 
         t0 = time.time()
-        winner, turns, bombs = run_one_game(players, verbose=verbose)
+        winner, turns, bombs, fallbacks = run_one_game(players, verbose=verbose)
         elapsed = time.time() - t0
         total_time += elapsed
         total_turns += turns
+        for pos, count in fallbacks.items():
+            total_fallbacks[pos] = total_fallbacks.get(pos, 0) + count
 
         if args.rounds > 1 or args.compact:
             winner_label = "地主" if winner == 0 else "农民" if winner in (1, 2) else "超时"
@@ -263,7 +273,11 @@ def main():
                 else:
                     total_llm_wins += 1
 
-            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s")
+            fb_str = ""
+            if fallbacks:
+                fb_parts = [f"{ROLE_NAMES[p]}:{c}" for p, c in fallbacks.items()]
+                fb_str = f", LLM兜底: {{{', '.join(fb_parts)}}}"
+            print(f"  #{r + 1}: {winner_label}胜, {turns}回合, {bombs}炸, {elapsed:.1f}s{fb_str}")
 
     if args.rounds > 1:
         print(f"\n{'=' * 50}")
@@ -274,6 +288,9 @@ def main():
         print(f"  LLM 方: {[ROLE_NAMES[p] for p in llm_positions]}")
         print(f"  Deep 方: {[ROLE_NAMES[p] for p in deep_positions]}")
         print(f"  LLM 方胜: {total_llm_wins}, Deep 方胜: {total_deep_wins}")
+        if total_fallbacks:
+            fb_parts = [f"{ROLE_NAMES[p]}:{c}" for p, c in total_fallbacks.items()]
+            print(f"  LLM 兜底总计: {{{', '.join(fb_parts)}}}")
 
 
 if __name__ == "__main__":
