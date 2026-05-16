@@ -27,8 +27,8 @@ def get_llm_config():
     return {
         "api_key": api_key,
         "base_url": os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
-        "model": os.environ.get("LLM_MODEL", "deepseek-v4-pro"),
-        "timeout": int(os.environ.get("LLM_TIMEOUT", "30")),
+        "model": os.environ.get("LLM_MODEL", "deepseek-v4-flash"),
+        "timeout": int(os.environ.get("LLM_TIMEOUT", "120")),
         "max_retries": int(os.environ.get("LLM_MAX_RETRIES", "3")),
         "llm_agent_positions": llm_positions,
     }

@@ -14,8 +14,8 @@ class TestGetLLMConfig:
         config = get_llm_config()
         assert config["api_key"] == "sk-test"
         assert config["base_url"] == "https://api.deepseek.com"
-        assert config["model"] == "deepseek-v4-pro"
-        assert config["timeout"] == 30
+        assert config["model"] == "deepseek-v4-flash"
+        assert config["timeout"] == 120
         assert config["max_retries"] == 3
         assert config["llm_agent_positions"] == [0, 1, 2]
 
