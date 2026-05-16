@@ -55,7 +55,10 @@ Respond with a JSON object only:
 - "action": "" (empty string) for pass.
 - Pick ONLY from the provided legal actions list."""
 
-USER_MESSAGE_TEMPLATE = """## Your Position
+USER_MESSAGE_TEMPLATE = """## Players
+Player 0: landlord, Player 1: peasant (landlord_down), Player 2: peasant (landlord_up)
+
+## Your Position
 Player {position} ({role})
 
 ## Your Hand

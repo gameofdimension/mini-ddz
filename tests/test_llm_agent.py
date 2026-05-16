@@ -87,6 +87,7 @@ class TestBuildUserMessage:
             bomb_num=0,
         )
         msg = agent._build_user_message(infoset)
+        assert "Player 0: landlord, Player 1: peasant" in msg
         assert "Player 0 (landlord)" in msg
         assert "2 A A A A 5 4 3" in msg
         assert "Player 0: 8, Player 1: 8, Player 2: 8" in msg
