@@ -241,17 +241,19 @@ def main():
     pretrained_dir = os.path.join(os.path.dirname(__file__), "..", "pve_server", "pretrained", "douzero_pretrained")
     pretrained_dir = os.path.abspath(pretrained_dir)
 
-    agent_map = {"landlord": args.landlord, "down": args.down, "up": args.up}
-    players = []
-    for role_key in ("landlord", "down", "up"):
-        pos = ROLE_POSITIONS[role_key]
+    def _make_player(pos, role_key):
         agent_type = agent_map[role_key]
         if agent_type == "llm":
-            players.append(LLMAgent(pos, debug_log=args.log_llm_calls))
+            return LLMAgent(pos, debug_log=args.log_llm_calls)
         elif agent_type == "deep":
-            players.append(DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True))
+            return DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True)
         else:
-            players.append(RandomAgent(pos))
+            return RandomAgent(pos)
+
+    agent_map = {"landlord": args.landlord, "down": args.down, "up": args.up}
+
+    # Build initial players (rebuilt per round when logging is on)
+    players = [_make_player(ROLE_POSITIONS[k], k) for k in ("landlord", "down", "up")]
 
     if verbose:
         print("=" * 60)
@@ -279,9 +281,12 @@ def main():
         return agent_map[role_key]
 
     for r in range(args.rounds):
-        for p in players:
-            if hasattr(p, "fallback_count"):
-                p.fallback_count = 0
+        if args.log_llm_calls:
+            players = [_make_player(ROLE_POSITIONS[k], k) for k in ("landlord", "down", "up")]
+        else:
+            for p in players:
+                if hasattr(p, "fallback_count"):
+                    p.fallback_count = 0
 
         if args.rounds > 1:
             print(f"\n[Round {r + 1}/{args.rounds}]")
