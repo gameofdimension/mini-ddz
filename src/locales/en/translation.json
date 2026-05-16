@@ -26,6 +26,7 @@
         "start": "Start",
         "restart": "Restart",
         "new_battle": "New Battle",
+        "new_llm_battle": "New LLM Battle",
         "pause": "Pause",
         "resume": "Resume",
         "landlord_wins": "Landlord Wins",
