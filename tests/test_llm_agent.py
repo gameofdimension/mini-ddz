@@ -1,6 +1,8 @@
 """Tests for llm_agent.py."""
 
 import json
+import threading
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -162,3 +164,44 @@ class TestAct:
 
         assert actions == [[6]]
         assert confs == [0.0]
+
+
+class TestThreadSafety:
+    """Verify LLMAgent protects shared mutable state against concurrent access."""
+
+    def test_has_lock(self, mock_config):
+        agent = LLMAgent(0)
+        assert hasattr(agent, "_lock")
+        assert isinstance(agent._lock, type(threading.Lock()))
+
+    def test_concurrent_fallback_count(self, mock_config):
+        """fallback_count should be correct after N concurrent fallback calls."""
+        agent = LLMAgent(0)
+        iters = 200
+        errors = []
+
+        with patch.object(agent, "_call_llm", side_effect=RuntimeError("boom")):
+            def do_fallback():
+                try:
+                    agent.act(InfoSet(
+                        player_position=0,
+                        player_hand_cards=[3],
+                        num_cards_left=[1, 0, 0],
+                        legal_actions=[[3], []],
+                        rival_move=[],
+                        last_moves=[[], [], []],
+                        played_cards=[[], [], []],
+                        bomb_num=0,
+                        three_landlord_cards=[3, 4, 5],
+                    ))
+                except Exception as e:
+                    errors.append(e)
+
+            threads = [threading.Thread(target=do_fallback) for _ in range(iters)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+        assert len(errors) == 0
+        assert agent.fallback_count == iters
