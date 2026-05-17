@@ -64,6 +64,22 @@ class InfoSet:
         self.bomb_num = bomb_num
 
 
+def _flatten_action_seq(card_play_action_seq: List[List[List[int]]]) -> List[List[int]]:
+    """Interleave per-player action sequences by turn order (P0, P1, P2, ...).
+
+    *card_play_action_seq* is ``[p0_actions, p1_actions, p2_actions]`` where
+    each sub-list holds one player's actions in chronological order.
+    """
+    n0, n1, n2 = len(card_play_action_seq[0]), len(card_play_action_seq[1]), len(card_play_action_seq[2])
+    assert n0 >= n1 and n0 >= n2, f"P0 should have most actions, got {n0}/{n1}/{n2}"
+    seq: List[List[int]] = []
+    for i in range(n0):
+        for pos in range(3):
+            if i < len(card_play_action_seq[pos]):
+                seq.append(card_play_action_seq[pos][i])
+    return seq
+
+
 def _get_legal_card_play_actions(player_hand_cards: List[int], rival_move: List[int]) -> List[List[int]]:
     """Return all legal moves given a hand and the rival's last play."""
     mg = MovesGener(player_hand_cards)
@@ -160,7 +176,7 @@ def generate_ai_battle_data(players: list) -> Dict[str, Any]:
             ),
             num_cards_left=[len(current_hands_plain[i]) for i in range(3)],
             three_landlord_cards=cards["three_landlord_cards"].copy(),
-            card_play_action_seq=[a for pos in range(3) for a in card_play_action_seq[pos]],
+            card_play_action_seq=_flatten_action_seq(card_play_action_seq),
             last_moves=[[] for _ in range(3)],
             played_cards=[p.copy() for p in played_cards],
             bomb_num=bomb_num,

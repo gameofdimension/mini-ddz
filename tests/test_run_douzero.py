@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from card_maps import Card2Suit, EnvCard2RealCard, RealCard2EnvCard
 from deck import _action_to_suit_format, _assign_card_suits, _cards_to_suit_format, _deal_cards, _init_deck
-from game import InfoSet, _get_legal_card_play_actions
+from game import InfoSet, _flatten_action_seq, _get_legal_card_play_actions
 from run_douzero import app
 
 
@@ -221,6 +221,76 @@ class TestGetLegalCardPlayActions:
         result = _get_legal_card_play_actions(hand, [17])  # 2
         # Should only have pass option (empty list)
         assert [] in result
+
+
+class TestFlattenActionSeq:
+    """Test _flatten_action_seq: interleave per-player actions by turn order."""
+
+    def test_empty(self):
+        assert _flatten_action_seq([[], [], []]) == []
+
+    def test_first_turn_only_p0(self):
+        seq = [[[3]], [], []]
+        assert _flatten_action_seq(seq) == [[3]]
+
+    def test_one_full_round(self):
+        """P0, P1, P2 each played once."""
+        seq = [[[3]], [[5]], [[]]]
+        assert _flatten_action_seq(seq) == [[3], [5], []]
+
+    def test_two_rounds_all_equal(self):
+        """Each player has exactly 2 actions."""
+        seq = [
+            [[3], []],       # P0: played 3, then pass
+            [[5], []],       # P1: played 5, then pass
+            [[], [8]],       # P2: pass, then played 8
+        ]
+        expected = [
+            [3],   # i=0, pos=0
+            [5],   # i=0, pos=1
+            [],    # i=0, pos=2
+            [],    # i=1, pos=0
+            [],    # i=1, pos=1
+            [8],   # i=1, pos=2
+        ]
+        assert _flatten_action_seq(seq) == expected
+
+    def test_p0_has_extra_turn(self):
+        """P0 has 3 actions, P1 and P2 have 2 each (P0 started the round)."""
+        seq = [
+            [[3], [], [4]],   # P0: 3 actions
+            [[5], []],        # P1: 2 actions
+            [[], [8]],        # P2: 2 actions
+        ]
+        expected = [
+            [3],   # i=0, pos=0
+            [5],   # i=0, pos=1
+            [],    # i=0, pos=2
+            [],    # i=1, pos=0
+            [],    # i=1, pos=1
+            [8],   # i=1, pos=2
+            [4],   # i=2, pos=0
+        ]
+        assert _flatten_action_seq(seq) == expected
+
+    def test_three_consecutive_passes_not_adjacent(self):
+        seq = [
+            [[3], []],       # P0
+            [[5], []],       # P1
+            [[], []],        # P2
+        ]
+        result = _flatten_action_seq(seq)
+        assert result == [[3], [5], [], [], [], []]
+
+    def test_p0_not_longest_asserts(self):
+        """If P1 has more actions than P0, the invariant is broken → AssertionError."""
+        seq = [
+            [[3]],           # P0: 1 action
+            [[5], [8]],      # P1: 2 actions (impossible in normal game)
+            [[]],            # P2: 1 action
+        ]
+        with pytest.raises(AssertionError, match="P0 should have most actions"):
+            _flatten_action_seq(seq)
 
 
 class TestInfoSet:

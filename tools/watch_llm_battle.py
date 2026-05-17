@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 from card_maps import EnvCard2RealCard
 from deck import _assign_card_suits, _deal_cards
 from deep import DeepAgent
-from game import InfoSet, _get_legal_card_play_actions
+from game import InfoSet, _flatten_action_seq, _get_legal_card_play_actions
 from llm_agent import LLMAgent
 from random_agent import RandomAgent
 
@@ -118,7 +118,7 @@ def run_one_game(players, verbose=True):
             ),
             num_cards_left=[len(current_hands[i]) for i in range(3)],
             three_landlord_cards=cards["three_landlord_cards"].copy(),
-            card_play_action_seq=[a for pos in range(3) for a in card_play_action_seq[pos]],
+            card_play_action_seq=_flatten_action_seq(card_play_action_seq),
             last_moves=last_moves,
             played_cards=[p.copy() for p in played_cards],
             bomb_num=bomb_num,
