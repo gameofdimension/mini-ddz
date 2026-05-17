@@ -45,3 +45,9 @@ pytest.ini
 
 uv.lock
 screenshot/
+logs/
+
+.mypy_cache/
+.pytest_cache/
+.venv/
+htmlcov/

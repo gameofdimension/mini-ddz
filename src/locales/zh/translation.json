@@ -26,6 +26,7 @@
         "start": "开始",
         "restart": "重新开始",
         "new_battle": "新对局",
+        "new_llm_battle": "新LLM对战",
         "pause": "暂停",
         "resume": "继续",
         "landlord_wins": "地主胜利",

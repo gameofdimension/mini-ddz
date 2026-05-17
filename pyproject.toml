@@ -27,6 +27,7 @@ dependencies = [
     "onnxruntime",
     "pytest>=8.4.2",
     "pytest-cov",
+    "openai>=2.37.0",
 ]
 
 [project.optional-dependencies]

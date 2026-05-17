@@ -9,6 +9,7 @@ from deep import DeepAgent
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data
+from llm_agent import LLMAgent
 from replay_db import delete_replay, get_replay, list_replays, save_replay
 
 app = Flask(__name__)
@@ -27,6 +28,18 @@ def _get_players():
             DeepAgent(pos, pretrained_dir, use_onnx=True) for pos in ["landlord", "landlord_down", "landlord_up"]
         ]
     return _players
+
+
+# Lazy-loaded LLM players
+_llm_players = None
+
+
+def _get_llm_players():
+    """Get agent list for LLM battle (all three positions use LLMAgent)."""
+    global _llm_players
+    if _llm_players is None:
+        _llm_players = [LLMAgent(0), LLMAgent(1), LLMAgent(2)]
+    return _llm_players
 
 
 @app.route("/predict", methods=["POST"])
@@ -195,6 +208,24 @@ def generate_ai_battle():
     except Exception:
         logger.exception("Error in /generate_ai_battle")
         return jsonify({"status": -1, "message": "failed to generate replay"})
+
+
+@app.route("/generate_llm_battle", methods=["GET"])
+def generate_llm_battle():
+    """Generate a replay by running a game with LLM agents."""
+    try:
+        battle_data = generate_ai_battle_data(_get_llm_players())
+        battle_id = str(uuid.uuid4())[:8]
+        battle_data["battle_id"] = battle_id
+        battle_data["source"] = "llm_battle"
+
+        if save_replay(battle_id, battle_data):
+            return jsonify({"status": 0, "message": "success", "battle_id": battle_id, "data": battle_data})
+        else:
+            return jsonify({"status": -1, "message": "failed to save replay"})
+    except Exception:
+        logger.exception("Error in /generate_llm_battle")
+        return jsonify({"status": -1, "message": "failed to generate LLM battle"})
 
 
 @app.route("/save_replay", methods=["POST"])
