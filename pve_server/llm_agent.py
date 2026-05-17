@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import threading
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -120,6 +121,7 @@ class LLMAgent:
             raise ValueError(f"Invalid position {position}, must be 0, 1, or 2")
 
         self.position = position
+        self._lock = threading.Lock()
         config = get_llm_config()
         self._client = OpenAI(
             api_key=config["api_key"],
@@ -193,7 +195,7 @@ class LLMAgent:
         rival_move = infoset.rival_move
         rival_str = LLMAgent._env_action_to_str(rival_move) if rival_move else "none"
 
-        # -- play history (flattened sequence: p0, p1, p2, p0, …)
+        # -- play history (flattened sequence: p0, p1, p2, p0, ...)
         action_seq = infoset.card_play_action_seq
         if action_seq:
             lines: List[str] = []
@@ -230,7 +232,7 @@ class LLMAgent:
     def _call_llm(self, messages: List[Dict[str, str]]) -> str:
         """Call the DeepSeek API with retries and exponential backoff.
 
-        Tries up to max_retries times (default 3) with delays 1s, 2s, 4s, …
+        Tries up to max_retries times (default 3) with delays 1s, 2s, 4s, ...
         Raises the last error if all attempts fail.
         """
         last_error: Optional[Exception] = None
@@ -264,9 +266,9 @@ class LLMAgent:
                     raise
                 last_error = exc
                 if attempt < self._max_retries - 1:
-                    delay = 2**attempt  # 1, 2, 4, … seconds
+                    delay = 2**attempt  # 1, 2, 4, ... seconds
                     logger.warning(
-                        "LLM API call failed (attempt %d/%d): %s. Retrying in %ds…",
+                        "LLM API call failed (attempt %d/%d): %s. Retrying in %ds...",
                         attempt + 1,
                         total_attempts,
                         exc,
@@ -347,7 +349,8 @@ class LLMAgent:
             "Legal actions: %s",
             [self._env_action_to_str(a) for a in legal_actions],
         )
-        self.fallback_count += 1
+        with self._lock:
+            self.fallback_count += 1
         self.last_analysis = ""
         fallback = legal_actions[0] if legal_actions else []
         return [fallback], [0.0]
