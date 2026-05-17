@@ -24,3 +24,16 @@ class TestRandomAgent:
         actions, confidences = agent.act(infoset)
         assert actions == [[]]
         assert confidences == [0.0]
+
+    def test_no_fallback_count_attribute(self):
+        """RandomAgent has no fallback path, so fallback_count should not exist."""
+        agent = RandomAgent(0)
+        assert not hasattr(agent, "fallback_count")
+
+    def test_only_essential_attributes(self):
+        """RandomAgent should have a minimal interface — just position and act."""
+        agent = RandomAgent(2)
+        assert agent.position == 2
+        assert callable(agent.act)
+        public_attrs = [k for k in vars(agent) if not k.startswith("_")]
+        assert public_attrs == ["position"]

@@ -11,7 +11,6 @@ class RandomAgent:
         if position not in (0, 1, 2):
             raise ValueError(f"Invalid position {position}, must be 0, 1, or 2")
         self.position = position
-        self.fallback_count = 0
 
     def act(self, infoset) -> Tuple[List[List[int]], List[float]]:
         legal_actions = infoset.legal_actions
