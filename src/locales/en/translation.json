@@ -42,12 +42,13 @@
 
     "nav": {
         "three_ai_battle": "3 AI Battle",
-        "custom_battle": "Custom Battle",
+        "custom_battle": "Agent Battle",
         "replay": "Replay"
     },
 
     "configurable_battle": {
         "title": "Configure Agent Battle",
+        "agent": "AI",
         "start_battle": "Start Battle",
         "new_battle": "New Battle",
         "change_agents": "Change Agents",

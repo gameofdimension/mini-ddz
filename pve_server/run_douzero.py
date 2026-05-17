@@ -47,6 +47,18 @@ def _get_llm_players():
     return _llm_players
 
 
+# Lazy-loaded Random players
+_random_players = None
+
+
+def _get_random_players():
+    """Get agent list for Random-agent battles (all three positions use RandomAgent)."""
+    global _random_players
+    if _random_players is None:
+        _random_players = [RandomAgent(0), RandomAgent(1), RandomAgent(2)]
+    return _random_players
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
@@ -157,7 +169,16 @@ def predict():
         info_set.rival_move = rival_move
         info_set.legal_actions = _get_legal_card_play_actions(player_hand_cards, rival_move)
 
-        actions, actions_confidence = _get_players()[player_position].act(info_set)
+        agent_type = request.form.get("agent_type", "deep")
+        if agent_type == "deep":
+            agent = _get_players()[player_position]
+        elif agent_type == "llm":
+            agent = _get_llm_players()[player_position]
+        elif agent_type == "random":
+            agent = _get_random_players()[player_position]
+        else:
+            return jsonify({"status": 1, "message": f"Invalid agent_type: {agent_type}"})
+        actions, actions_confidence = agent.act(info_set)
         actions = ["".join([EnvCard2RealCard[a] for a in action]) for action in actions]
         result = {}
         win_rates = {}

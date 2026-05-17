@@ -42,12 +42,13 @@
 
     "nav": {
         "three_ai_battle": "3 AI对战",
-        "custom_battle": "自定义对战",
+        "custom_battle": "智能体对战",
         "replay": "回放"
     },
 
     "configurable_battle": {
         "title": "配置智能体对战",
+        "agent": "AI",
         "start_battle": "开始对战",
         "new_battle": "新对局",
         "change_agents": "更换智能体",

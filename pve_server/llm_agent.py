@@ -79,6 +79,12 @@ Player 0: landlord, Player 1: peasant (landlord_down), Player 2: peasant (landlo
 ## Your Position
 Player {position} ({role})
 
+## Three Landlord Cards
+{landlord_cards}
+
+## Play History
+{history_str}
+
 ## Your Hand
 {hand_str}
 
@@ -90,9 +96,6 @@ Player {position} ({role})
 
 ## Last Opponent Move
 {rival_str}
-
-## Play History
-{history_str}
 
 ## Legal Actions
 {legal_str}
@@ -170,6 +173,11 @@ class LLMAgent:
         position = infoset.player_position
         role = "landlord" if position == 0 else "peasant"
 
+        # -- three landlord cards (always 3 cards, visible to all players)
+        landlord_cards = infoset.three_landlord_cards
+        assert landlord_cards, "three_landlord_cards should always be present"
+        landlord_str = " ".join(EnvCard2RealCard[c] for c in sorted(landlord_cards, reverse=True))
+
         # -- hand (descending rank order)
         hand_cards = sorted(infoset.player_hand_cards, reverse=True)
         hand_str = " ".join(EnvCard2RealCard[c] for c in hand_cards)
@@ -206,6 +214,7 @@ class LLMAgent:
         return USER_MESSAGE_TEMPLATE.format(
             position=position,
             role=role,
+            landlord_cards=landlord_str,
             hand_str=hand_str,
             cards_left=cards_left_str,
             bomb_num=bomb_num,

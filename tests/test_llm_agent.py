@@ -93,6 +93,7 @@ class TestBuildUserMessage:
         assert "Player 0: 8, Player 1: 8, Player 2: 8" in msg
         assert "pass" in msg
         assert "AAAA" in msg
+        assert "5 4 3" in msg  # three landlord cards
 
 
 class TestFallbackAction:
@@ -124,6 +125,7 @@ class TestAct:
             last_moves=[[], [], []],
             played_cards=[[], [], []],
             bomb_num=0,
+            three_landlord_cards=[3, 4, 5],
         )
 
         mock_response = MagicMock()
@@ -152,6 +154,7 @@ class TestAct:
             last_moves=[[], [], []],
             played_cards=[[], [], []],
             bomb_num=0,
+            three_landlord_cards=[3, 4, 5],
         )
 
         with patch.object(agent, "_call_llm", side_effect=RuntimeError("API down")):

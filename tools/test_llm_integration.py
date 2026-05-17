@@ -144,13 +144,10 @@ except Exception as e:
 # ---------------------------------------------------------------------------
 print("\n=== Test 4: Multi-turn — 1 LLM (landlord) + 2 DeepAgents ===")
 try:
-    # Force only landlord to use LLM, peasants use DeepAgent
-    os.environ["LLM_AGENT_POSITIONS"] = "0"
-
     from deep import DeepAgent
-    from run_douzero import _get_llm_players
+    from run_douzero import _make_players
 
-    players = _get_llm_players()
+    players = _make_players("llm", "deep", "deep")
     check("3 players created", len(players) == 3)
     check("Player 0 is LLMAgent", isinstance(players[0], LLMAgent))
     check("Player 1 is DeepAgent", isinstance(players[1], DeepAgent))

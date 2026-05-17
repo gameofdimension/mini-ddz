@@ -5,9 +5,13 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Divider from '@material-ui/core/Divider';
+import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
+import Select from '@material-ui/core/Select';
 import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -17,7 +21,14 @@ import qs from 'query-string';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
+import '../../assets/gameview.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
+
+const POSITIONS = [
+    { key: 'landlord', labelKey: 'doudizhu.landlord' },
+    { key: 'down', labelKey: 'doudizhu.landlord_down' },
+    { key: 'up', labelKey: 'doudizhu.landlord_up' },
+];
 import {
     card2SuiteAndRank,
     computeHandCardsWidth,
@@ -89,6 +100,9 @@ function PvEDoudizhuDemoView() {
     const [hideRivalHand, setHideRivalHand] = useState(true);
     const [hidePredictionArea, setHidePredictionArea] = useState(true);
     const [statisticRows, setStatisticRows] = useState([]);
+    const [agentTypes, setAgentTypes] = useState({ landlord: 'deep', down: 'deep', up: 'deep' });
+
+    const POS_KEY = { 0: 'landlord', 1: 'down', 2: 'up' };
 
     const cardArr2DouzeroFormat = (cards) => {
         return cards
@@ -148,9 +162,12 @@ function PvEDoudizhuDemoView() {
             setIsPassDisabled(playingCard.length === 0 && gd.gameHistory[gd.gameHistory.length - 1].length === 0);
         }
 
-        // delay play for api player
+        // delay play for api player (skip for LLM — it already takes long enough)
         if (gameState.currentPlayer !== mainPlayerId) {
-            await timeout(apiPlayDelay);
+            const pos = gd.playerInfo[gameState.currentPlayer].douzeroPlayerPosition;
+            if (agentTypes[POS_KEY[pos]] !== 'llm') {
+                await timeout(apiPlayDelay);
+            }
         }
 
         setToggleFade('fade-out');
@@ -361,7 +378,7 @@ function PvEDoudizhuDemoView() {
             gameState.hands[gd.playerInfo.find((player) => player.douzeroPlayerPosition === 1).index].length;
         const num_cards_left_landlord_up =
             gameState.hands[gd.playerInfo.find((player) => player.douzeroPlayerPosition === 2).index].length;
-        const three_landlord_cards = cardArr2DouzeroFormat(gd.threeLandlordCards.slice().reverse());
+        const three_landlord_cards = cardArr2DouzeroFormat(gd.originalThreeLandlordCards.slice().reverse());
         const card_play_action_seq = gd.gameHistory
             .map((cards) => {
                 return cardArr2DouzeroFormat(cards);
@@ -399,6 +416,7 @@ function PvEDoudizhuDemoView() {
             played_cards_landlord,
             played_cards_landlord_down,
             played_cards_landlord_up,
+            agent_type: agentTypes[POS_KEY[player_position]],
         };
 
         try {
@@ -549,11 +567,37 @@ function PvEDoudizhuDemoView() {
         gd.replayInitHands = prepareReplayInitHands(gd.initHands, gd.threeLandlordCards, landlordIdx);
         // Add landlord cards to game state
         gd.initHands[landlordIdx] = gd.initHands[landlordIdx].concat(gd.threeLandlordCards.slice());
+        setGameStatus('configuring');
+    };
+
+    const handleStartGame = () => {
+        // Set agentInfo for display
+        for (let i = 0; i < 3; i++) {
+            const p = gd.playerInfo[i];
+            if (i === mainPlayerId) {
+                p.agentInfo = { name: 'Player' };
+            } else {
+                const posKey = POS_KEY[p.douzeroPlayerPosition];
+                const labelMap = { deep: 'DouZero', llm: 'LLM', random: 'Random' };
+                p.agentInfo = { name: `${labelMap[agentTypes[posKey]] || agentTypes[posKey]}` };
+            }
+        }
         setGameStatus('playing');
     };
 
+    const humanDouzeroPos = gd.playerInfo[mainPlayerId]?.douzeroPlayerPosition;
+    const humanRole = humanDouzeroPos !== undefined && humanDouzeroPos >= 0
+        ? POS_KEY[humanDouzeroPos] : 'landlord';
+
     const gameStateTimer = () => {
+        const scheduledTurn = gameState.turn;
+        const scheduledPlayer = gameState.currentPlayer;
+        clearTimeout(gameStateTimeoutRef.current);
         gameStateTimeoutRef.current = setTimeout(() => {
+            // Bail out if the turn or player changed (stale callback from a previous timer cycle)
+            if (gameState.turn !== scheduledTurn || gameState.currentPlayer !== scheduledPlayer) {
+                return;
+            }
             let currentConsiderationTime = considerationTime;
             if (currentConsiderationTime > 0) {
                 currentConsiderationTime -= considerationTimeDeduction;
@@ -561,8 +605,12 @@ function PvEDoudizhuDemoView() {
                 setConsiderationTime(currentConsiderationTime);
             } else {
                 // consideration time used up for current player
-                // if current player is controlled by user, auto play or pass
-                if (gameState.currentPlayer === mainPlayerId && gameStatusRef.current === 'playing') {
+                if (gameState.currentPlayer !== mainPlayerId && gameStatusRef.current === 'playing') {
+                    // AI player — reset timer to show continuous thinking animation
+                    setConsiderationTime(initConsiderationTime);
+                    gameStateTimer();
+                } else if (gameState.currentPlayer === mainPlayerId && gameStatusRef.current === 'playing') {
+                    // Human player — auto play or pass
                     if (gd.legalActions.turn === gameState.turn && gd.legalActions.actions.length > 0) {
                         // Auto play the first legal action
                         const autoPlayRanks = gd.legalActions.actions[0].split('');
@@ -951,36 +999,66 @@ function PvEDoudizhuDemoView() {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <div className={'doudizhu-view-container'}>
-                <Layout.Row style={{ height: '540px' }}>
-                    <Layout.Col style={{ height: '100%' }} span="17">
-                        <div style={{ height: '100%' }}>
-                            <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
-                                <DoudizhuGameBoard
-                                    showCardBack={gameStatus === 'playing' && hideRivalHand}
-                                    handleSelectRole={handleSelectRole}
-                                    isPassDisabled={isPassDisabled}
-                                    isHintDisabled={isHintDisabled}
-                                    gamePlayable={true}
-                                    playerInfo={gd.playerInfo}
-                                    hands={gameState.hands}
-                                    selectedCards={selectedCards}
-                                    handleSelectedCards={handleSelectedCards}
-                                    latestAction={gameState.latestAction}
-                                    mainPlayerId={mainPlayerId}
-                                    currentPlayer={gameState.currentPlayer}
-                                    considerationTime={considerationTime}
-                                    turn={gameState.turn}
-                                    toggleFade={toggleFade}
-                                    gameStatus={gameStatus}
-                                    handleMainPlayerAct={handleMainPlayerAct}
-                                    handleLocaleChange={handleLocaleChange}
-                                />
-                            </Paper>
+            {gameStatus === 'configuring' && (
+                <div className="configurable-battle-container">
+                    <Paper elevation={3} className="config-panel">
+                        <h2>{t('configurable_battle.title')}</h2>
+                        <p style={{ marginBottom: '16px' }}>
+                            {t('doudizhu.role')}: {t(`doudizhu.${humanRole}`)}
+                        </p>
+                        {POSITIONS.filter(p => p.key !== humanRole).map(({ key, labelKey }) => (
+                            <FormControl key={key} style={{ margin: '12px', minWidth: 200 }}>
+                                <InputLabel>{t(labelKey)} ({t('configurable_battle.agent')})</InputLabel>
+                                <Select
+                                    value={agentTypes[key]}
+                                    onChange={(e) => setAgentTypes(prev => ({ ...prev, [key]: e.target.value }))}
+                                >
+                                    <MenuItem value="deep">{t('configurable_battle.agent_deep')}</MenuItem>
+                                    <MenuItem value="llm">{t('configurable_battle.agent_llm')}</MenuItem>
+                                    <MenuItem value="random">{t('configurable_battle.agent_random')}</MenuItem>
+                                </Select>
+                            </FormControl>
+                        ))}
+                        <div style={{ marginTop: '24px' }}>
+                            <Button variant="contained" color="primary" onClick={handleStartGame}>
+                                {t('configurable_battle.start_battle')}
+                            </Button>
                         </div>
-                    </Layout.Col>
-                    <Layout.Col span="7" style={{ height: '100%' }}>
-                        <Paper className={'doudizhu-probability-paper'} elevation={3}>
+                    </Paper>
+                </div>
+            )}
+
+            {gameStatus !== 'configuring' && (
+                <div className={'doudizhu-view-container'}>
+                    <Layout.Row style={{ height: '540px' }}>
+                        <Layout.Col style={{ height: '100%' }} span="17">
+                            <div style={{ height: '100%' }}>
+                                <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
+                                    <DoudizhuGameBoard
+                                        showCardBack={gameStatus === 'playing' && hideRivalHand}
+                                        handleSelectRole={handleSelectRole}
+                                        isPassDisabled={isPassDisabled}
+                                        isHintDisabled={isHintDisabled}
+                                        gamePlayable={true}
+                                        playerInfo={gd.playerInfo}
+                                        hands={gameState.hands}
+                                        selectedCards={selectedCards}
+                                        handleSelectedCards={handleSelectedCards}
+                                        latestAction={gameState.latestAction}
+                                        mainPlayerId={mainPlayerId}
+                                        currentPlayer={gameState.currentPlayer}
+                                        considerationTime={considerationTime}
+                                        turn={gameState.turn}
+                                        toggleFade={toggleFade}
+                                        gameStatus={gameStatus}
+                                        handleMainPlayerAct={handleMainPlayerAct}
+                                        handleLocaleChange={handleLocaleChange}
+                                    />
+                                </Paper>
+                            </div>
+                        </Layout.Col>
+                        <Layout.Col span="7" style={{ height: '100%' }}>
+                            <Paper className={'doudizhu-probability-paper'} elevation={3}>
                             {gd.playerInfo.length > 0 && gameState.currentPlayer !== null ? (
                                 <div style={{ padding: '16px' }}>
                                     <span style={{ textAlign: 'center', marginBottom: '8px', display: 'block' }}>
@@ -1098,6 +1176,7 @@ function PvEDoudizhuDemoView() {
                     </Paper>
                 </div>
             </div>
+            )}
         </div>
     );
 }
