@@ -126,6 +126,7 @@ class LLMAgent:
         self._timeout = config["timeout"]
         self._max_retries = config["max_retries"]
         self.fallback_count = 0
+        self.last_analysis = ""
         self._call_count = 0
         self._call_log_path: Optional[str] = None
 
@@ -338,6 +339,7 @@ class LLMAgent:
             [self._env_action_to_str(a) for a in legal_actions],
         )
         self.fallback_count += 1
+        self.last_analysis = ""
         fallback = legal_actions[0] if legal_actions else []
         return [fallback], [0.0]
 
@@ -360,6 +362,12 @@ class LLMAgent:
         content: Optional[str] = None
         try:
             content = self._call_llm(messages)
+            # Extract analysis text before parsing (so it's available even on parse failure)
+            try:
+                data = json.loads(content) if content else {}
+                self.last_analysis = data.get("analysis", "") or ""
+            except json.JSONDecodeError:
+                self.last_analysis = ""
             action, confidence = self._parse_response(content, infoset.legal_actions)
             return [action], [confidence]
         except Exception as exc:

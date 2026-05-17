@@ -42,7 +42,21 @@
 
     "nav": {
         "three_ai_battle": "3 AI Battle",
+        "custom_battle": "Custom Battle",
         "replay": "Replay"
+    },
+
+    "configurable_battle": {
+        "title": "Configure Agent Battle",
+        "start_battle": "Start Battle",
+        "new_battle": "New Battle",
+        "change_agents": "Change Agents",
+        "agent_deep": "Deep (DouZero AI)",
+        "agent_llm": "LLM (DeepSeek)",
+        "agent_random": "Random",
+        "llm_analysis": "LLM Analysis",
+        "waiting_analysis": "Waiting for LLM...",
+        "continue": "Continue"
     },
 
     "errors": {

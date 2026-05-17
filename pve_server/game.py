@@ -6,6 +6,9 @@ from typing import Any, Dict, List
 
 from card_maps import EnvCard2RealCard
 from deck import _action_to_suit_format, _assign_card_suits, _deal_cards
+from deep import DeepAgent
+from llm_agent import LLMAgent
+from random_agent import RandomAgent
 from utils.move_generator import MovesGener
 
 from utils import move_detector as md
@@ -116,28 +119,24 @@ def _get_legal_card_play_actions(player_hand_cards: List[int], rival_move: List[
     return moves
 
 
-def generate_ai_battle_data(players: list) -> Dict[str, Any]:
-    """Generate a replay by running a game with DouZero AI.
+def _get_agent_label(player: Any, role: str) -> str:
+    """Return a human-readable label for an agent instance."""
+    if isinstance(player, LLMAgent):
+        return f"LLM-{role}"
+    if isinstance(player, RandomAgent):
+        return f"Random-{role}"
+    if isinstance(player, DeepAgent):
+        return f"DouZero-{role}"
+    return f"Unknown-{role}"
 
-    Args:
-        players: List of 3 DeepAgent instances [landlord, landlord_down, landlord_up]
 
-    Returns:
-        Replay data dictionary.
-    """
-    cards = _deal_cards()
-
-    hands_with_suits = {
-        0: _assign_card_suits(cards[0]),
-        1: _assign_card_suits(cards[1]),
-        2: _assign_card_suits(cards[2]),
-    }
-
-    replay_data: Dict[str, Any] = {
+def _build_init_replay_data(players: list, hands_with_suits: Dict[int, list]) -> Dict[str, Any]:
+    """Build the static initial portion of replay data (no moveHistory)."""
+    return {
         "playerInfo": [
-            {"id": 0, "index": 0, "role": "landlord", "agentInfo": {"name": "DouZero-Landlord"}},
-            {"id": 1, "index": 1, "role": "peasant", "agentInfo": {"name": "DouZero-Peasant"}},
-            {"id": 2, "index": 2, "role": "peasant", "agentInfo": {"name": "DouZero-Peasant"}},
+            {"id": 0, "index": 0, "role": "landlord", "agentInfo": {"name": _get_agent_label(players[0], "Landlord")}},
+            {"id": 1, "index": 1, "role": "peasant", "agentInfo": {"name": _get_agent_label(players[1], "Peasant")}},
+            {"id": 2, "index": 2, "role": "peasant", "agentInfo": {"name": _get_agent_label(players[2], "Peasant")}},
         ],
         "initHands": [
             " ".join([suit for _, suit in hands_with_suits[0]]),
@@ -147,87 +146,227 @@ def generate_ai_battle_data(players: list) -> Dict[str, Any]:
         "moveHistory": [],
     }
 
-    current_hands_with_suits = {
-        0: hands_with_suits[0].copy(),
-        1: hands_with_suits[1].copy(),
-        2: hands_with_suits[2].copy(),
+
+def init_game(players: list) -> tuple:
+    """Deal cards, assign suits, create initial game state.
+
+    Returns:
+        ``(init_data, game_state)`` where *init_data* has playerInfo, initHands,
+        three_landlord_cards (internal format); *game_state* is a mutable dict
+        that gets passed to :func:`step_game`.
+    """
+    cards = _deal_cards()
+
+    hands_with_suits = {
+        0: _assign_card_suits(cards[0]),
+        1: _assign_card_suits(cards[1]),
+        2: _assign_card_suits(cards[2]),
     }
-    current_hands_plain = {0: cards[0].copy(), 1: cards[1].copy(), 2: cards[2].copy()}
 
-    current_player = 0
-    last_move: List[int] = []
-    last_move_player = -1
-    card_play_action_seq: List[List[List[int]]] = [[], [], []]
-    played_cards: List[List[int]] = [[], [], []]
-    bomb_num = 0
-    max_turns = 100
-    turn = 0
+    init_data = _build_init_replay_data(players, hands_with_suits)
+    init_data["three_landlord_cards"] = cards["three_landlord_cards"].copy()
 
-    while turn < max_turns:
-        if not current_hands_plain[current_player]:
-            break
+    game_state = {
+        "cards": cards,
+        "current_hands_plain": {0: cards[0].copy(), 1: cards[1].copy(), 2: cards[2].copy()},
+        "current_hands_with_suits": {
+            0: hands_with_suits[0].copy(),
+            1: hands_with_suits[1].copy(),
+            2: hands_with_suits[2].copy(),
+        },
+        "current_player": 0,
+        "last_move": [],
+        "last_move_player": -1,
+        "card_play_action_seq": [[], [], []],
+        "latest_actions": ["", "", ""],  # suit format strings per player
+        "played_cards": [[], [], []],
+        "bomb_num": 0,
+        "turn": 0,
+        "max_turns": 100,
+    }
 
-        info_set = InfoSet(
-            player_position=current_player,
-            player_hand_cards=current_hands_plain[current_player].copy(),
-            other_hand_cards=sorted(
-                [c for i in range(3) if i != current_player for c in current_hands_plain[i]],
-                reverse=True,
-            ),
-            num_cards_left=[len(current_hands_plain[i]) for i in range(3)],
-            three_landlord_cards=cards["three_landlord_cards"].copy(),
-            card_play_action_seq=_flatten_action_seq(card_play_action_seq),
-            last_moves=[[] for _ in range(3)],
-            played_cards=[p.copy() for p in played_cards],
-            bomb_num=bomb_num,
-            rival_move=last_move.copy() if last_move_player >= 0 and last_move_player != current_player else [],
-        )
+    return init_data, game_state
 
-        if last_move_player >= 0 and last_move:
-            info_set.last_moves[last_move_player] = last_move.copy()
 
-        info_set.legal_actions = _get_legal_card_play_actions(
-            current_hands_plain[current_player].copy(), info_set.rival_move
-        )
+def step_game(players: list, gs: dict) -> dict:
+    """Run one turn of the game, update *gs* in place.
 
-        actions, confidences = players[current_player].act(info_set)
-        action = actions[0] if actions else []
+    Returns a dict with the move record and derived UI state that the frontend
+    needs to update the game board.
+    """
+    cp = gs["current_player"]
+    hands_plain = gs["current_hands_plain"]
+    hands_suits = gs["current_hands_with_suits"]
 
-        move_record = {
-            "playerIdx": current_player,
-            "move": _action_to_suit_format(action, current_hands_with_suits[current_player]),
+    cards = gs["cards"]
+    last_move = gs["last_move"]
+    last_move_player = gs["last_move_player"]
+    card_play_action_seq = gs["card_play_action_seq"]
+    played_cards = gs["played_cards"]
+    bomb_num = gs["bomb_num"]
+    turn = gs["turn"]
+    max_turns = gs["max_turns"]
+
+    if turn >= max_turns or not hands_plain[cp]:
+        return _step_game_over_response(gs)
+
+    info_set = InfoSet(
+        player_position=cp,
+        player_hand_cards=hands_plain[cp].copy(),
+        other_hand_cards=sorted(
+            [c for i in range(3) if i != cp for c in hands_plain[i]], reverse=True
+        ),
+        num_cards_left=[len(hands_plain[i]) for i in range(3)],
+        three_landlord_cards=cards["three_landlord_cards"].copy(),
+        card_play_action_seq=_flatten_action_seq(card_play_action_seq),
+        last_moves=[[] for _ in range(3)],
+        played_cards=[p.copy() for p in played_cards],
+        bomb_num=bomb_num,
+        rival_move=last_move.copy() if last_move_player >= 0 and last_move_player != cp else [],
+    )
+
+    if last_move_player >= 0 and last_move:
+        info_set.last_moves[last_move_player] = last_move.copy()
+
+    info_set.legal_actions = _get_legal_card_play_actions(
+        hands_plain[cp].copy(), info_set.rival_move
+    )
+
+    actions, confidences = players[cp].act(info_set)
+    action = actions[0] if actions else []
+
+    llm_analysis = ""
+    if hasattr(players[cp], "last_analysis"):
+        llm_analysis = players[cp].last_analysis or ""
+
+    move_suit = _action_to_suit_format(action, hands_suits[cp])
+
+    if action:
+        for card in action:
+            if card in hands_plain[cp]:
+                hands_plain[cp].remove(card)
+            for i, (c, _s) in enumerate(hands_suits[cp]):
+                if c == card:
+                    hands_suits[cp].pop(i)
+                    break
+
+        gs["last_move"] = action.copy()
+        gs["last_move_player"] = cp
+        played_cards[cp].extend(action)
+
+        move_type = md.get_move_type(action)
+        if move_type["type"] in (md.TYPE_4_BOMB, md.TYPE_5_KING_BOMB):
+            bomb_num += 1
+            gs["bomb_num"] = bomb_num
+
+        gs["latest_actions"][cp] = move_suit
+    else:
+        gs["latest_actions"][cp] = "pass"
+
+    card_play_action_seq[cp].append(action)
+
+    game_over = not hands_plain[cp]
+    if game_over:
+        return {
+            "playerIdx": cp,
+            "move": move_suit,
             "info": {
                 "values": {
                     "".join([EnvCard2RealCard[a] for a in actions[i]]): float(confidences[i])
                     for i in range(len(actions))
                 }
             },
+            "analysis": llm_analysis,
+            "hands": [_suits_to_str(hands_suits[i]) for i in range(3)],
+            "latestAction": list(gs["latest_actions"]),
+            "currentPlayer": cp,
+            "bombNum": bomb_num,
+            "turn": turn + 1,
+            "gameOver": True,
+            "winner": cp,
+        }
+
+    gs["current_player"] = (cp + 1) % 3
+    gs["turn"] = turn + 1
+
+    return {
+        "playerIdx": cp,
+        "move": move_suit,
+        "info": {
+            "values": {
+                "".join([EnvCard2RealCard[a] for a in actions[i]]): float(confidences[i])
+                for i in range(len(actions))
+            }
+        },
+        "analysis": llm_analysis,
+        "hands": [_suits_to_str(hands_suits[i]) for i in range(3)],
+        "latestAction": list(gs["latest_actions"]),
+        "currentPlayer": gs["current_player"],
+        "bombNum": bomb_num,
+        "turn": gs["turn"],
+        "gameOver": False,
+        "winner": None,
+    }
+
+
+def _suits_to_str(hand_with_suits: list) -> str:
+    """Join a suit-format hand list into a space-separated string."""
+    return " ".join(suit for _, suit in hand_with_suits)
+
+
+def _step_game_over_response(gs: dict) -> dict:
+    """Build a gameOver response when the game is already over."""
+    hands_suits = gs["current_hands_with_suits"]
+    return {
+        "playerIdx": gs["current_player"],
+        "move": "pass",
+        "info": {"values": {}},
+        "analysis": "",
+        "hands": [_suits_to_str(hands_suits[i]) for i in range(3)],
+        "latestAction": list(gs["latest_actions"]),
+        "currentPlayer": gs["current_player"],
+        "bombNum": gs["bomb_num"],
+        "turn": gs["turn"],
+        "gameOver": True,
+        "winner": None,
+    }
+
+
+def generate_ai_battle_data(players: list) -> Dict[str, Any]:
+    """Generate a replay by running a complete game.
+
+    Args:
+        players: List of 3 agent instances [landlord, landlord_down, landlord_up]
+
+    Returns:
+        Replay data dictionary.
+    """
+    init_data, gs = init_game(players)
+    del init_data["three_landlord_cards"]
+
+    replay_data: Dict[str, Any] = {
+        "playerInfo": init_data["playerInfo"],
+        "initHands": init_data["initHands"],
+        "moveHistory": [],
+    }
+
+    max_turns = gs["max_turns"]
+    turn = 0
+    while turn < max_turns:
+        if not gs["current_hands_plain"][gs["current_player"]]:
+            break
+
+        step = step_game(players, gs)
+        move_record = {
+            "playerIdx": step["playerIdx"],
+            "move": step["move"],
+            "info": step["info"],
         }
         replay_data["moveHistory"].append(move_record)
 
-        if action:
-            for card in action:
-                if card in current_hands_plain[current_player]:
-                    current_hands_plain[current_player].remove(card)
-                for i, (c, _s) in enumerate(current_hands_with_suits[current_player]):
-                    if c == card:
-                        current_hands_with_suits[current_player].pop(i)
-                        break
-
-            last_move = action.copy()
-            last_move_player = current_player
-            played_cards[current_player].extend(action)
-
-            move_type = md.get_move_type(action)
-            if move_type["type"] in (md.TYPE_4_BOMB, md.TYPE_5_KING_BOMB):
-                bomb_num += 1
-
-        card_play_action_seq[current_player].append(action)
-
-        if not current_hands_plain[current_player]:
+        if step["gameOver"]:
             break
 
-        current_player = (current_player + 1) % 3
-        turn += 1
+        turn = gs["turn"]
 
     return replay_data

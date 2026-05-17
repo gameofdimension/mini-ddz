@@ -6,6 +6,7 @@ import { DoudizhuReplayView } from './view/ReplayView';
 import { ReplayListView } from './view/ReplayListView';
 import { AIBattleView } from './view/AIBattleView';
 import { LLMBattleView } from './view/LLMBattleView';
+import { ConfigurableBattleView } from './view/ConfigurableBattleView';
 
 const navbarSubtitleMap = {
     '/': 'DouDizhu',
@@ -13,6 +14,7 @@ const navbarSubtitleMap = {
     '/pve/doudizhu-demo': 'Doudizhu PvE Demo',
     '/ai-battle': '3 AI Battle',
     '/llm-battle': '3 LLM Battle',
+    '/custom-battle': 'Custom Battle',
 };
 
 function App() {
@@ -26,6 +28,7 @@ function App() {
                 <Route path="/pve/doudizhu-demo" component={PvEDoudizhuDemoView} />
                 <Route path="/ai-battle" component={AIBattleView} />
                 <Route path="/llm-battle" component={LLMBattleView} />
+                <Route path="/custom-battle" component={ConfigurableBattleView} />
             </div>
         </Router>
     );

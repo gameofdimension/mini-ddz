@@ -42,7 +42,21 @@
 
     "nav": {
         "three_ai_battle": "3 AI对战",
+        "custom_battle": "自定义对战",
         "replay": "回放"
+    },
+
+    "configurable_battle": {
+        "title": "配置智能体对战",
+        "start_battle": "开始对战",
+        "new_battle": "新对局",
+        "change_agents": "更换智能体",
+        "agent_deep": "Deep (DouZero AI)",
+        "agent_llm": "LLM (DeepSeek)",
+        "agent_random": "随机",
+        "llm_analysis": "LLM推理过程",
+        "waiting_analysis": "等待LLM响应...",
+        "continue": "继续"
     },
 
     "errors": {

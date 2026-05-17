@@ -2,17 +2,22 @@
 
 import logging
 import os
+import time
 import uuid
 
 from card_maps import EnvCard2RealCard, RealCard2EnvCard
 from deep import DeepAgent
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data
+from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data, init_game, step_game
 from llm_agent import LLMAgent
+from random_agent import RandomAgent
 from replay_db import delete_replay, get_replay, list_replays, save_replay
 
 app = Flask(__name__)
+
+# In-memory store for live battle sessions: session_id → {players, game_state, created_at}
+_live_sessions: dict = {}
 CORS(app)
 logger = logging.getLogger(__name__)
 
@@ -226,6 +231,150 @@ def generate_llm_battle():
     except Exception:
         logger.exception("Error in /generate_llm_battle")
         return jsonify({"status": -1, "message": "failed to generate LLM battle"})
+
+
+def _make_players(landlord_type: str, down_type: str, up_type: str) -> list:
+    """Instantiate agents for the three positions."""
+    pretrained_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "pretrained", "douzero_pretrained"
+    )
+    agent_types = [landlord_type, down_type, up_type]
+    players = []
+    for pos in range(3):
+        at = agent_types[pos]
+        if at == "deep":
+            role_str = ["landlord", "landlord_down", "landlord_up"][pos]
+            players.append(DeepAgent(role_str, pretrained_dir, use_onnx=True))
+        elif at == "llm":
+            players.append(LLMAgent(pos))
+        else:
+            players.append(RandomAgent(pos))
+    return players
+
+
+@app.route("/live-battle/start", methods=["POST"])
+def live_battle_start():
+    """Start a live battle session. Returns session_id and initial game data.
+
+    Accepts JSON body: {"landlord": "deep|llm|random", "down": ..., "up": ...}
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": 1, "message": "Request body is required"})
+
+        landlord_type = data.get("landlord", "deep")
+        down_type = data.get("down", "deep")
+        up_type = data.get("up", "deep")
+
+        for key, val in {"landlord": landlord_type, "down": down_type, "up": up_type}.items():
+            if val not in ("deep", "llm", "random"):
+                return jsonify({
+                    "status": 2,
+                    "message": f"Invalid agent type '{val}' for '{key}'. Must be one of: deep, llm, random"
+                })
+
+        players = _make_players(landlord_type, down_type, up_type)
+        init_data, game_state = init_game(players)
+        session_id = str(uuid.uuid4())[:8]
+
+        _live_sessions[session_id] = {
+            "players": players,
+            "game_state": game_state,
+            "created_at": time.time(),
+        }
+
+        return jsonify({
+            "status": 0,
+            "message": "success",
+            "session_id": session_id,
+            "data": {
+                "playerInfo": init_data["playerInfo"],
+                "initHands": init_data["initHands"],
+            },
+        })
+
+    except ValueError as exc:
+        msg = str(exc)
+        if "DEEPSEEK_API_KEY" in msg:
+            return jsonify({
+                "status": -1,
+                "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
+            })
+        logger.exception("Error in /live-battle/start")
+        return jsonify({"status": -1, "message": msg})
+    except Exception:
+        logger.exception("Error in /live-battle/start")
+        return jsonify({"status": -1, "message": "failed to start battle"})
+
+
+@app.route("/live-battle/<session_id>/next", methods=["POST"])
+def live_battle_next(session_id):
+    """Run one turn of a live battle session and return the result."""
+    try:
+        session = _live_sessions.get(session_id)
+        if session is None:
+            return jsonify({"status": 1, "message": "Session not found"})
+
+        step = step_game(session["players"], session["game_state"])
+        if step["gameOver"]:
+            _live_sessions.pop(session_id, None)
+
+        return jsonify({"status": 0, **step})
+
+    except Exception:
+        logger.exception("Error in /live-battle/%s/next", session_id)
+        return jsonify({"status": -1, "message": "failed to compute next turn"})
+
+
+@app.route("/generate_battle", methods=["POST"])
+def generate_battle():
+    """Generate a replay with configurable agents per position.
+
+    Expects JSON body: {"landlord": "deep|llm|random", "down": ..., "up": ...}
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": 1, "message": "Request body is required"})
+
+        landlord_type = data.get("landlord", "deep")
+        down_type = data.get("down", "deep")
+        up_type = data.get("up", "deep")
+
+        for key, val in {"landlord": landlord_type, "down": down_type, "up": up_type}.items():
+            if val not in ("deep", "llm", "random"):
+                return jsonify({
+                    "status": 2,
+                    "message": f"Invalid agent type '{val}' for '{key}'. Must be one of: deep, llm, random"
+                })
+
+        players = _make_players(landlord_type, down_type, up_type)
+        battle_data = generate_ai_battle_data(players)
+        battle_id = str(uuid.uuid4())[:8]
+        battle_data["battle_id"] = battle_id
+        battle_data["source"] = "custom_battle"
+
+        if save_replay(battle_id, battle_data):
+            return jsonify({
+                "status": 0, "message": "success",
+                "battle_id": battle_id, "data": battle_data
+            })
+        else:
+            return jsonify({"status": -1, "message": "failed to save replay"})
+
+    except ValueError as exc:
+        msg = str(exc)
+        if "DEEPSEEK_API_KEY" in msg:
+            return jsonify({
+                "status": -1,
+                "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
+            })
+        logger.exception("Error in /generate_battle")
+        return jsonify({"status": -1, "message": msg})
+    except Exception:
+        logger.exception("Error in /generate_battle")
+        return jsonify({"status": -1, "message": "failed to generate battle"})
 
 
 @app.route("/save_replay", methods=["POST"])

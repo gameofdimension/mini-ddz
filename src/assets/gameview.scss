@@ -239,6 +239,45 @@
     }
 }
 
+.configurable-battle-container {
+    max-width: 520px;
+    margin: 40px auto;
+    text-align: center;
+
+    .config-panel {
+        padding: 32px 24px;
+
+        h2 {
+            margin-bottom: 16px;
+        }
+    }
+}
+
+.live-battle-banner {
+    width: 1000px;
+    margin: 5px auto 0;
+    padding: 10px 20px;
+    text-align: center;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.live-battle-thinking {
+    width: 300px;
+    margin: 8px auto 0;
+}
+
+.live-battle-overlay {
+    text-align: center;
+    margin-top: 12px;
+}
+
 .leduc-view-container {
     width: 1000px;
     margin-left: auto;
