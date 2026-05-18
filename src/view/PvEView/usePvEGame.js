@@ -72,6 +72,7 @@ export function usePvEGame(t) {
     const [isPassDisabled, setIsPassDisabled] = useState(true);
     const [isHintDisabled, setIsHintDisabled] = useState(true);
     const [predictionRes, setPredictionRes] = useState({ prediction: [], hands: [] });
+    const [llmAnalysis, setLlmAnalysis] = useState('');
     const [hideRivalHand, setHideRivalHand] = useState(true);
     const [hidePredictionArea, setHidePredictionArea] = useState(true);
     const [statisticRows, setStatisticRows] = useState([]);
@@ -372,6 +373,9 @@ export function usePvEGame(t) {
                         prediction: sortedResult.map(r => [r[0], data.win_rates[r[0]]]),
                         hands: gameState.hands[cp].slice(),
                     });
+                    if (data.analysis) {
+                        setLlmAnalysis(data.analysis);
+                    }
                     if (Object.keys(data.result).length === 1) {
                         bestAction = Object.keys(data.result)[0];
                     } else {
@@ -576,6 +580,7 @@ export function usePvEGame(t) {
         setGameState({ hands: [[], [], []], latestAction: [[], [], []], currentPlayer: null, turn: 0 });
         setSelectedCards([]);
         setPredictionRes({ prediction: [], hands: [] });
+        setLlmAnalysis('');
         setHideRivalHand(hidePredictionArea);
         setGameStatus('ready');
         setIsGameEndDialogOpen(false);
@@ -594,6 +599,7 @@ export function usePvEGame(t) {
                 requestApiPlay();
             } else {
                 setPredictionRes({ prediction: [], hands: [] });
+        setLlmAnalysis('');
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -609,6 +615,7 @@ export function usePvEGame(t) {
         gameState, gameStatus, setGameStatus, considerationTime, setConsiderationTime,
         toggleFade, selectedCards, isPassDisabled, isHintDisabled,
         predictionRes, hideRivalHand, hidePredictionArea,
+        llmAnalysis, setLlmAnalysis,
         statisticRows, agentTypes, setAgentTypes,
         isGameEndDialogOpen, gameEndTitle,
         apiPlayDelay, setApiPlayDelay,

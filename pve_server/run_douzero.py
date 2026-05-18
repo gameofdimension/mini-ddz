@@ -216,6 +216,10 @@ def predict():
             win_rates[actions[i]] = str(round((win_rate + 1) / 2, 4))
             result[actions[i]] = str(round(actions_confidence[i], 6))
 
+        analysis = ""
+        if isinstance(agent, LLMAgent):
+            analysis = agent.last_analysis or ""
+
         if app.debug:
             logger.debug("Rival Move: %s", rival_move)
             logger.debug("legal_actions: %s", info_set.legal_actions)
@@ -223,7 +227,11 @@ def predict():
             for key in request.form:
                 logger.debug("%s: %s", key, request.form.get(key))
 
-        return jsonify({"status": 0, "message": "success", "result": result, "win_rates": win_rates})
+        return jsonify({
+            "status": 0, "message": "success",
+            "result": result, "win_rates": win_rates,
+            "analysis": analysis,
+        })
     except Exception:
         logger.exception("Error in /predict")
         return jsonify({"status": -1, "message": "unknown error"})

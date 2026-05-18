@@ -283,6 +283,24 @@ function PvEDoudizhuDemoView() {
                                 <div className={'probability-item'}>{computeProbabilityItem(1)}</div>
                                 <div className={'probability-item'}>{computeProbabilityItem(2)}</div>
                             </div>
+                            {game.llmAnalysis && (
+                                <>
+                                    <Divider />
+                                    <div style={{ padding: '12px 16px 8px' }}>
+                                        <div style={{ fontWeight: 700, fontSize: '12px', color: '#1565c0', marginBottom: '6px' }}>
+                                            {t('configurable_battle.llm_analysis')}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
+                                            color: '#333', backgroundColor: '#e3f2fd',
+                                            borderLeft: '3px solid #1976d2',
+                                            padding: '8px 10px', borderRadius: '0 4px 4px 0',
+                                        }}>
+                                            {game.llmAnalysis}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </Paper>
                     </Layout.Col>
                 </Layout.Row>
