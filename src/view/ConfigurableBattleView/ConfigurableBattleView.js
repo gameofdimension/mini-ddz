@@ -41,7 +41,7 @@ function createInitBoard() {
         turn: 0,
         gameStatus: 'ready',  // 'ready' | 'playing' | 'paused' | 'over'
         thinking: false,
-        lastAnalysis: '',
+        lastAnalysis: [],
         paused: false,
     };
 }
@@ -80,7 +80,7 @@ function ConfigurableBattleView() {
                 turn: 0,
                 gameStatus: 'playing',
                 thinking: true,
-                lastAnalysis: '',
+                lastAnalysis: [],
                 paused: false,
             });
             pollingRef.current = true;
@@ -118,10 +118,11 @@ function ConfigurableBattleView() {
                     // Pause after LLM agent plays so the user can read the analysis
                     next.paused = !!step.analysis && !step.gameOver;
                     next.lastAnalysis = step.analysis
-                        ? prev.lastAnalysis
-                            + (prev.lastAnalysis ? '\n\n' : '')
-                            + '[' + (next.playerInfo[step.playerIdx]?.agentInfo?.name || ('P' + step.playerIdx)) + '] '
-                            + step.analysis
+                        ? [...prev.lastAnalysis, {
+                            agentName: next.playerInfo[step.playerIdx]?.agentInfo?.name || ('P' + step.playerIdx),
+                            playerIdx: step.playerIdx,
+                            text: step.analysis,
+                        }]
                         : prev.lastAnalysis;
 
                     if (step.gameOver) {
@@ -214,7 +215,7 @@ function ConfigurableBattleView() {
                 turn: 0,
                 gameStatus: 'playing',
                 thinking: true,
-                lastAnalysis: '',
+                lastAnalysis: [],
                 paused: false,
             });
             pollingRef.current = true;
@@ -311,13 +312,41 @@ function ConfigurableBattleView() {
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
                                     {t('configurable_battle.llm_analysis')}
                                 </div>
-                                <div
-                                    ref={analysisRef}
-                                    style={{ fontSize: '14px', lineHeight: '1.6', whiteSpace: 'pre-wrap', maxHeight: '480px', overflow: 'auto' }}
-                                >
-                                    {board.lastAnalysis || (board.thinking
-                                        ? t('configurable_battle.waiting_analysis')
-                                        : '')}
+                                <div ref={analysisRef} style={{ maxHeight: '480px', overflow: 'auto' }}>
+                                    {board.lastAnalysis.length > 0 ? (
+                                        board.lastAnalysis.map((item, i) => {
+                                            const colors = {
+                                                0: { border: '#1976d2', bg: '#e3f2fd', label: '#1565c0' },
+                                                1: { border: '#2e7d32', bg: '#e8f5e9', label: '#1b5e20' },
+                                                2: { border: '#e65100', bg: '#fff3e0', label: '#bf360c' },
+                                            };
+                                            const c = colors[item.playerIdx] || colors[0];
+                                            return (
+                                                <div key={i} style={{
+                                                    borderLeft: `3px solid ${c.border}`,
+                                                    backgroundColor: c.bg,
+                                                    marginBottom: '10px',
+                                                    padding: '8px 10px',
+                                                    borderRadius: '0 4px 4px 0',
+                                                }}>
+                                                    <div style={{
+                                                        fontWeight: 700, fontSize: '12px',
+                                                        color: c.label, marginBottom: '4px',
+                                                    }}>
+                                                        {item.agentName}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '13px', lineHeight: '1.55',
+                                                        whiteSpace: 'pre-wrap', color: '#333',
+                                                    }}>
+                                                        {item.text}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        board.thinking ? t('configurable_battle.waiting_analysis') : ''
+                                    )}
                                 </div>
                             </div>
                         </Paper>
