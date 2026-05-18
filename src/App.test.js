@@ -24,10 +24,6 @@ jest.mock('./view/ReplayListView', () => ({
     ReplayListView: () => <div data-testid="replay-list-view">Replay List View</div>,
 }));
 
-jest.mock('./view/AIBattleView', () => ({
-    AIBattleView: () => <div data-testid="ai-battle-view">AI Battle View</div>,
-}));
-
 describe('App component', () => {
     it('should render without crashing', () => {
         // Basic smoke test
@@ -42,7 +38,6 @@ describe('App component', () => {
 
     it('should contain navigation buttons', () => {
         const { getByText } = render(<App />);
-        expect(getByText('nav.three_ai_battle')).toBeInTheDocument();
         expect(getByText('nav.replay')).toBeInTheDocument();
     });
 

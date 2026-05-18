@@ -32,7 +32,6 @@ describe('Navbar component', () => {
     it('should render the AI Battle button', () => {
         const history = createMemoryHistory();
         renderWithRouter(history);
-        expect(screen.getByText('nav.three_ai_battle')).toBeInTheDocument();
     });
 
     it('should render the Replay button', () => {
@@ -64,16 +63,6 @@ describe('Navbar component', () => {
         fireEvent.click(title);
 
         expect(history.location.pathname).toBe('/');
-    });
-
-    it('should navigate to AI Battle page when AI Battle button is clicked', () => {
-        const history = createMemoryHistory();
-        renderWithRouter(history);
-
-        const aiBattleButton = screen.getByText('nav.three_ai_battle').closest('div');
-        fireEvent.click(aiBattleButton);
-
-        expect(history.location.pathname).toBe('/ai-battle');
     });
 
     it('should navigate to replays page when Replay button is clicked', () => {

@@ -33,10 +33,6 @@ function Navbar() {
                     <div className={"title-text"}>Mini DDZ</div>
                 </div>
                 <div className={"stretch"} />
-                <div className="ai-battle-info" onClick={() => history.push('/ai-battle')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/ai-battle' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
-                    <div className="ai-battle-icon" style={{ marginRight: '5px' }}><SportsEsportsIcon /></div>
-                    <div className="ai-battle-text" style={{ fontWeight: 'bold' }}>{t('nav.three_ai_battle')}</div>
-                </div>
                 <div className="custom-battle-info" onClick={() => history.push('/custom-battle')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '20px', padding: '6px 12px', backgroundColor: location.pathname === '/custom-battle' ? 'rgba(255, 255, 255, 0.15)' : 'transparent', borderRadius: '4px', transition: 'background-color 0.3s' }}>
                     <div className="custom-battle-icon" style={{ marginRight: '5px' }}><SportsEsportsIcon /></div>
                     <div className="custom-battle-text">{t('nav.custom_battle')}</div>
