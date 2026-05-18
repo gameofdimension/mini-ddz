@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
 from card_maps import EnvCard2RealCard
 from deep import DeepAgent
+from agent_types import DEEP, LLM, RANDOM
 from game import _get_legal_card_play_actions, init_game, step_game
 from llm_agent import LLMAgent
 from random_agent import RandomAgent
@@ -217,9 +218,9 @@ def main():
 
     def _make_player(pos, role_key):
         agent_type = agent_map[role_key]
-        if agent_type == "llm":
+        if agent_type == LLM:
             return LLMAgent(pos)
-        elif agent_type == "deep":
+        elif agent_type == DEEP:
             return DeepAgent(["landlord", "landlord_down", "landlord_up"][pos], pretrained_dir, use_onnx=True)
         else:
             return RandomAgent(pos)

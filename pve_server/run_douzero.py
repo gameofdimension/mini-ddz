@@ -10,6 +10,7 @@ from deep import DeepAgent
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data, init_game, step_game
+from agent_types import DEEP, LLM, RANDOM, is_valid
 from llm_agent import LLMAgent
 from llm_config import ConfigError
 from random_agent import RandomAgent
@@ -196,12 +197,12 @@ def predict():
         info_set.rival_move = rival_move
         info_set.legal_actions = _get_legal_card_play_actions(player_hand_cards, rival_move)
 
-        agent_type = request.form.get("agent_type", "deep")
-        if agent_type == "deep":
+        agent_type = request.form.get("agent_type", DEEP)
+        if agent_type == DEEP:
             agent = _get_players()[player_position]
-        elif agent_type == "llm":
+        elif agent_type == LLM:
             agent = _get_llm_agent(player_position)
-        elif agent_type == "random":
+        elif agent_type == RANDOM:
             agent = _get_random_agent(player_position)
         else:
             return jsonify({"status": 1, "message": f"Invalid agent_type: {agent_type}"})
@@ -272,10 +273,10 @@ def _make_players(landlord_type: str, down_type: str, up_type: str) -> list:
     players = []
     for pos in range(3):
         at = agent_types[pos]
-        if at == "deep":
+        if at == DEEP:
             role_str = ["landlord", "landlord_down", "landlord_up"][pos]
             players.append(DeepAgent(role_str, pretrained_dir, use_onnx=True))
-        elif at == "llm":
+        elif at == LLM:
             players.append(LLMAgent(pos))
         else:
             players.append(RandomAgent(pos))
@@ -293,12 +294,12 @@ def live_battle_start():
         if not data:
             return jsonify({"status": 1, "message": "Request body is required"})
 
-        landlord_type = data.get("landlord", "deep")
-        down_type = data.get("down", "deep")
-        up_type = data.get("up", "deep")
+        landlord_type = data.get("landlord", DEEP)
+        down_type = data.get("down", DEEP)
+        up_type = data.get("up", DEEP)
 
         for key, val in {"landlord": landlord_type, "down": down_type, "up": up_type}.items():
-            if val not in ("deep", "llm", "random"):
+            if not is_valid(val):
                 return jsonify({
                     "status": 2,
                     "message": f"Invalid agent type '{val}' for '{key}'. Must be one of: deep, llm, random"
@@ -376,12 +377,12 @@ def generate_battle():
         if not data:
             return jsonify({"status": 1, "message": "Request body is required"})
 
-        landlord_type = data.get("landlord", "deep")
-        down_type = data.get("down", "deep")
-        up_type = data.get("up", "deep")
+        landlord_type = data.get("landlord", DEEP)
+        down_type = data.get("down", DEEP)
+        up_type = data.get("up", DEEP)
 
         for key, val in {"landlord": landlord_type, "down": down_type, "up": up_type}.items():
-            if val not in ("deep", "llm", "random"):
+            if not is_valid(val):
                 return jsonify({
                     "status": 2,
                     "message": f"Invalid agent type '{val}' for '{key}'. Must be one of: deep, llm, random"
