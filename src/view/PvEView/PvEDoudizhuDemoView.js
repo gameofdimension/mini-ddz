@@ -213,7 +213,7 @@ function PvEDoudizhuDemoView() {
             {game.gameStatus !== 'configuring' && (
                 <div className={'doudizhu-view-container'}>
                     <Layout.Row style={{ height: '540px' }}>
-                        <Layout.Col style={{ height: '100%' }} span="3">
+                        <Layout.Col style={{ height: '100%' }} span="4">
                             <Paper className={'doudizhu-probability-paper'} elevation={3}>
                             {game.gameDataRef.current.playerInfo.length > 0 && game.gameState.currentPlayer !== null ? (
                                 <div style={{ padding: '16px' }}>
@@ -259,7 +259,7 @@ function PvEDoudizhuDemoView() {
                             </div>
                         </Paper>
                     </Layout.Col>
-                    <Layout.Col style={{ height: '100%' }} span="17">
+                    <Layout.Col style={{ height: '100%' }} span="16">
                         <div style={{ height: '100%' }}>
                             <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
                                 <DoudizhuGameBoard
