@@ -321,7 +321,7 @@ function ConfigurableBattleView() {
 
             <div className={'doudizhu-view-container'}>
                 <Layout.Row style={{ height: '540px' }}>
-                    <Layout.Col style={{ height: '100%' }} span="18">
+                    <Layout.Col style={{ height: '100%' }} span="17">
                         <div style={{ height: '100%' }}>
                             <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
                                 <DoudizhuGameBoard
@@ -339,7 +339,7 @@ function ConfigurableBattleView() {
                             </Paper>
                         </div>
                     </Layout.Col>
-                    <Layout.Col span="6" style={{ height: '100%' }}>
+                    <Layout.Col span="7" style={{ height: '100%' }}>
                         <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ height: '100%', overflow: 'auto' }}>
                             <div style={{ padding: '16px' }}>
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
