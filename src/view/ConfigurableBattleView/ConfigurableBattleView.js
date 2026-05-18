@@ -15,6 +15,7 @@ import { DoudizhuGameBoard } from '../../components/GameBoard';
 import { douzeroDemoUrl } from '../../utils/config';
 
 const TURN_DELAY_MS = 2000;
+const PAUSE_COUNTDOWN = 10; // seconds
 
 const POSITIONS = [
     { key: 'landlord', labelKey: 'doudizhu.landlord' },
@@ -56,6 +57,9 @@ function ConfigurableBattleView() {
 
     const pollingRef = useRef(false);
     const analysisRef = useRef(null);
+    const [pauseCountdown, setPauseCountdown] = useState(0);
+    const countdownRef = useRef(null);
+
     // --- Config phase handlers ---
 
     const handleStart = useCallback(async () => {
@@ -190,7 +194,39 @@ function ConfigurableBattleView() {
         }
     }, [board.lastAnalysis]);
 
+    // Countdown timer: auto-resume after PAUSE_COUNTDOWN seconds
+    useEffect(() => {
+        if (board.paused) {
+            let remaining = PAUSE_COUNTDOWN;
+            setPauseCountdown(remaining);
+            countdownRef.current = setInterval(() => {
+                remaining -= 1;
+                setPauseCountdown(remaining);
+                if (remaining <= 0) {
+                    clearInterval(countdownRef.current);
+                    countdownRef.current = null;
+                    setTimeout(() => {
+                        pollingRef.current = true;
+                        setBoard(b => ({ ...b, paused: false, thinking: true }));
+                    }, 800);
+                }
+            }, 1000);
+        } else {
+            setPauseCountdown(0);
+        }
+        return () => {
+            if (countdownRef.current) {
+                clearInterval(countdownRef.current);
+                countdownRef.current = null;
+            }
+        };
+    }, [board.paused]);
+
     const handleResume = useCallback(() => {
+        if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+        }
         pollingRef.current = true;
         setBoard(prev => ({ ...prev, paused: false, thinking: true }));
     }, []);
@@ -368,7 +404,7 @@ function ConfigurableBattleView() {
             {board.paused && (
                 <div className="live-battle-overlay">
                     <Button variant="contained" color="primary" onClick={handleResume}>
-                        {t('configurable_battle.continue')}
+                        {t('configurable_battle.continue')} ({pauseCountdown}s)
                     </Button>
                 </div>
             )}
