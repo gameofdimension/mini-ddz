@@ -11,6 +11,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from game import InfoSet, _get_legal_card_play_actions, generate_ai_battle_data, init_game, step_game
 from llm_agent import LLMAgent
+from llm_config import ConfigError
 from random_agent import RandomAgent
 from replay_db import delete_replay, get_replay, list_replays, save_replay
 
@@ -327,15 +328,14 @@ def live_battle_start():
             },
         })
 
+    except ConfigError:
+        return jsonify({
+            "status": -1,
+            "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
+        })
     except ValueError as exc:
-        msg = str(exc)
-        if "DEEPSEEK_API_KEY" in msg:
-            return jsonify({
-                "status": -1,
-                "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
-            })
         logger.exception("Error in /live-battle/start")
-        return jsonify({"status": -1, "message": msg})
+        return jsonify({"status": -1, "message": str(exc)})
     except Exception:
         logger.exception("Error in /live-battle/start")
         return jsonify({"status": -1, "message": "failed to start battle"})
@@ -401,15 +401,14 @@ def generate_battle():
         else:
             return jsonify({"status": -1, "message": "failed to save replay"})
 
+    except ConfigError:
+        return jsonify({
+            "status": -1,
+            "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
+        })
     except ValueError as exc:
-        msg = str(exc)
-        if "DEEPSEEK_API_KEY" in msg:
-            return jsonify({
-                "status": -1,
-                "message": "LLM agent is unavailable: DEEPSEEK_API_KEY environment variable is not set on the server."
-            })
         logger.exception("Error in /generate_battle")
-        return jsonify({"status": -1, "message": msg})
+        return jsonify({"status": -1, "message": str(exc)})
     except Exception:
         logger.exception("Error in /generate_battle")
         return jsonify({"status": -1, "message": "failed to generate battle"})

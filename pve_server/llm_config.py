@@ -3,10 +3,14 @@
 import os
 
 
+class ConfigError(Exception):
+    """Raised when required LLM configuration is missing."""
+
+
 def get_llm_config():
     api_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if not api_key:
-        raise ValueError("DEEPSEEK_API_KEY environment variable is required")
+        raise ConfigError("DEEPSEEK_API_KEY environment variable is required")
 
     return {
         "api_key": api_key,
