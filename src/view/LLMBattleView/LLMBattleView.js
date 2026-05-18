@@ -7,7 +7,7 @@ import { GamePlaybackView } from '../GamePlaybackView';
 function LLMBattleView() {
     const { t } = useTranslation();
     const fetchData = useCallback(() => {
-        return axios.get(`${douzeroDemoUrl}/generate_llm_battle`).then((res) => {
+        return axios.post(`${douzeroDemoUrl}/generate_battle`, {landlord: "llm", down: "llm", up: "llm"}).then((res) => {
             if (res.data.status !== 0) {
                 throw new Error(res.data.message || 'Failed to generate LLM battle');
             }

@@ -63,28 +63,26 @@ def _get_players():
     return _players
 
 
-# Lazy-loaded LLM players
-_llm_players = None
+# Lazy-loaded LLM agents (one per position)
+_llm_agents: dict = {}
 
 
-def _get_llm_players():
-    """Get agent list for LLM battle (all three positions use LLMAgent)."""
-    global _llm_players
-    if _llm_players is None:
-        _llm_players = [LLMAgent(0), LLMAgent(1), LLMAgent(2)]
-    return _llm_players
+def _get_llm_agent(position: int):
+    """Get or create a cached LLMAgent for the given position."""
+    if position not in _llm_agents:
+        _llm_agents[position] = LLMAgent(position)
+    return _llm_agents[position]
 
 
-# Lazy-loaded Random players
-_random_players = None
+# Lazy-loaded Random agents (one per position)
+_random_agents: dict = {}
 
 
-def _get_random_players():
-    """Get agent list for Random-agent battles (all three positions use RandomAgent)."""
-    global _random_players
-    if _random_players is None:
-        _random_players = [RandomAgent(0), RandomAgent(1), RandomAgent(2)]
-    return _random_players
+def _get_random_agent(position: int):
+    """Get or create a cached RandomAgent for the given position."""
+    if position not in _random_agents:
+        _random_agents[position] = RandomAgent(position)
+    return _random_agents[position]
 
 
 @app.route("/predict", methods=["POST"])
@@ -201,9 +199,9 @@ def predict():
         if agent_type == "deep":
             agent = _get_players()[player_position]
         elif agent_type == "llm":
-            agent = _get_llm_players()[player_position]
+            agent = _get_llm_agent(player_position)
         elif agent_type == "random":
-            agent = _get_random_players()[player_position]
+            agent = _get_random_agent(player_position)
         else:
             return jsonify({"status": 1, "message": f"Invalid agent_type: {agent_type}"})
         actions, actions_confidence = agent.act(info_set)
@@ -262,24 +260,6 @@ def generate_ai_battle():
     except Exception:
         logger.exception("Error in /generate_ai_battle")
         return jsonify({"status": -1, "message": "failed to generate replay"})
-
-
-@app.route("/generate_llm_battle", methods=["GET"])
-def generate_llm_battle():
-    """Generate a replay by running a game with LLM agents."""
-    try:
-        battle_data = generate_ai_battle_data(_get_llm_players())
-        battle_id = str(uuid.uuid4())[:8]
-        battle_data["battle_id"] = battle_id
-        battle_data["source"] = "llm_battle"
-
-        if save_replay(battle_id, battle_data):
-            return jsonify({"status": 0, "message": "success", "battle_id": battle_id, "data": battle_data})
-        else:
-            return jsonify({"status": -1, "message": "failed to save replay"})
-    except Exception:
-        logger.exception("Error in /generate_llm_battle")
-        return jsonify({"status": -1, "message": "failed to generate LLM battle"})
 
 
 def _make_players(landlord_type: str, down_type: str, up_type: str) -> list:

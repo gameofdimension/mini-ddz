@@ -529,9 +529,9 @@ class TestFlaskRoutes:
 
 
 class TestGenerateLLMBattle:
-    """Test /generate_llm_battle endpoint."""
+    """Test /generate_battle endpoint with LLM agents (replaces removed /generate_llm_battle)."""
 
-    def test_generate_llm_battle_with_mock_agents(self, client, monkeypatch, temp_db):
+    def test_generate_battle_llm_with_mock_agents(self, client, monkeypatch, temp_db):
         """Test LLM battle endpoint with mocked LLMAgent."""
         import replay_db
 
@@ -547,18 +547,18 @@ class TestGenerateLLMBattle:
             mock_instance.act.return_value = (mock_action, mock_conf)
             mock_llm.return_value = mock_instance
 
-            response = client.get("/generate_llm_battle")
+            response = client.post("/generate_battle", json={"landlord": "llm", "down": "llm", "up": "llm"})
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["status"] == 0
             assert "battle_id" in data
-            assert data["data"]["source"] == "llm_battle"
+            assert data["data"]["source"] == "custom_battle"
             assert "playerInfo" in data["data"]
             assert "initHands" in data["data"]
             assert "moveHistory" in data["data"]
             assert len(data["data"]["playerInfo"]) == 3
 
-    def test_generate_llm_battle_error_handling(self, client, monkeypatch, temp_db):
+    def test_generate_battle_llm_error_handling(self, client, monkeypatch, temp_db):
         """Test LLM battle endpoint returns error on failure."""
         import replay_db
 
@@ -567,7 +567,7 @@ class TestGenerateLLMBattle:
         replay_db.DB_PATH = os.path.join(temp_db, "test.db")
 
         with patch("run_douzero.generate_ai_battle_data", side_effect=RuntimeError("simulated")):
-            response = client.get("/generate_llm_battle")
+            response = client.post("/generate_battle", json={"landlord": "llm", "down": "llm", "up": "llm"})
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["status"] == -1
@@ -683,3 +683,50 @@ class TestLiveBattleSessions:
         assert data["status"] == 1
 
         run_douzero._live_sessions.clear()
+
+
+class TestGenerateBattleWithLLM:
+    """Test /generate_battle endpoint with LLM agents."""
+
+    def test_generate_battle_with_llm_agents(self, client, monkeypatch, temp_db):
+        """Test /generate_battle with all-LLM agents via mocked LLMAgent."""
+        import replay_db
+
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        mock_action = [[3], [4], [5]]
+        mock_conf = [0.9, 0.8, 0.7]
+
+        with patch("run_douzero.LLMAgent") as mock_llm:
+            mock_instance = MagicMock()
+            mock_instance.act.return_value = (mock_action, mock_conf)
+            mock_llm.return_value = mock_instance
+
+            response = client.post("/generate_battle",
+                                  json={"landlord": "llm", "down": "llm", "up": "llm"})
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            assert data["status"] == 0
+            assert "battle_id" in data
+            assert data["data"]["source"] == "custom_battle"
+            assert "playerInfo" in data["data"]
+            assert "initHands" in data["data"]
+            assert "moveHistory" in data["data"]
+            assert len(data["data"]["playerInfo"]) == 3
+
+    def test_generate_battle_error_handling(self, client, monkeypatch, temp_db):
+        """Test /generate_battle returns error on failure."""
+        import replay_db
+
+        monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
+        replay_db.DB_DIR = temp_db
+        replay_db.DB_PATH = os.path.join(temp_db, "test.db")
+
+        with patch("run_douzero.generate_ai_battle_data", side_effect=RuntimeError("simulated")):
+            response = client.post("/generate_battle",
+                                  json={"landlord": "deep", "down": "deep", "up": "deep"})
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            assert data["status"] == -1
