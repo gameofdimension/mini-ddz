@@ -24,6 +24,14 @@ jest.mock('./view/ReplayListView', () => ({
     ReplayListView: () => <div data-testid="replay-list-view">Replay List View</div>,
 }));
 
+jest.mock('./view/LLMBattleView', () => ({
+    LLMBattleView: () => <div data-testid="llm-battle-view">LLM Battle View</div>,
+}));
+
+jest.mock('./view/ConfigurableBattleView', () => ({
+    ConfigurableBattleView: () => <div data-testid="custom-battle-view">Custom Battle View</div>,
+}));
+
 describe('App component', () => {
     it('should render without crashing', () => {
         // Basic smoke test
