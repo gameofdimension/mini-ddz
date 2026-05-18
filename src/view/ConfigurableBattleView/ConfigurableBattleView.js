@@ -16,7 +16,6 @@ import { douzeroDemoUrl } from '../../utils/config';
 
 const TURN_DELAY_MS = 2000;
 const PAUSE_COUNTDOWN = 10; // seconds
-const PAUSE_COUNTDOWN_INTERVAL = 200; // ms per tick for smooth animation
 
 const POSITIONS = [
     { key: 'landlord', labelKey: 'doudizhu.landlord' },
@@ -59,9 +58,7 @@ function ConfigurableBattleView() {
     const pollingRef = useRef(false);
     const analysisRef = useRef(null);
     const [pauseCountdown, setPauseCountdown] = useState(0);
-    const [pauseProgress, setPauseProgress] = useState(1);
     const countdownRef = useRef(null);
-    const countdownEndRef = useRef(0);
 
     // --- Config phase handlers ---
 
@@ -201,28 +198,21 @@ function ConfigurableBattleView() {
     // Countdown timer: auto-resume after PAUSE_COUNTDOWN seconds
     useEffect(() => {
         if (board.paused) {
-            const totalTicks = (PAUSE_COUNTDOWN * 1000) / PAUSE_COUNTDOWN_INTERVAL;
-            let tick = totalTicks;
-            countdownEndRef.current = Date.now() + PAUSE_COUNTDOWN * 1000;
-            setPauseCountdown(PAUSE_COUNTDOWN);
-            setPauseProgress(1);
-
+            let remaining = PAUSE_COUNTDOWN;
+            setPauseCountdown(remaining);
             countdownRef.current = setInterval(() => {
-                tick -= 1;
-                if (tick <= 0) {
+                remaining -= 1;
+                if (remaining <= 0) {
                     clearInterval(countdownRef.current);
                     countdownRef.current = null;
                     pollingRef.current = true;
                     setBoard(b => ({ ...b, paused: false, thinking: true }));
                     return;
                 }
-                const remaining = Math.ceil(tick * PAUSE_COUNTDOWN_INTERVAL / 1000);
                 setPauseCountdown(remaining);
-                setPauseProgress(tick / totalTicks);
-            }, PAUSE_COUNTDOWN_INTERVAL);
+            }, 1000);
         } else {
             setPauseCountdown(0);
-            setPauseProgress(1);
         }
         return () => {
             if (countdownRef.current) {
@@ -413,21 +403,9 @@ function ConfigurableBattleView() {
 
             {board.paused && (
                 <div className="live-battle-overlay">
-                    <div style={{ width: '260px', margin: '0 auto' }}>
-                        <div style={{
-                            height: '4px', backgroundColor: '#e0e0e0', borderRadius: '2px',
-                            marginBottom: '10px', overflow: 'hidden',
-                        }}>
-                            <div style={{
-                                height: '100%', width: `${pauseProgress * 100}%`,
-                                backgroundColor: '#1976d2', borderRadius: '2px',
-                                transition: 'width 0.2s linear',
-                            }} />
-                        </div>
-                        <Button variant="contained" color="primary" onClick={handleResume} fullWidth>
-                            {t('configurable_battle.continue')} ({pauseCountdown}s)
-                        </Button>
-                    </div>
+                    <Button variant="contained" color="primary" onClick={handleResume}>
+                        {t('configurable_battle.continue')} ({pauseCountdown}s)
+                    </Button>
                 </div>
             )}
 
