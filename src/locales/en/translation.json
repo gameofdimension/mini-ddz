@@ -53,8 +53,11 @@
         "new_battle": "New Battle",
         "change_agents": "Change Agents",
         "agent_deep": "Deep (DouZero AI)",
+        "agent_deep_desc": "Deep RL, fast local inference",
         "agent_llm": "LLM (DeepSeek)",
+        "agent_llm_desc": "LLM, cloud inference, with analysis",
         "agent_random": "Random",
+        "agent_random_desc": "Random legal action",
         "llm_analysis": "LLM Analysis",
         "waiting_analysis": "Waiting for LLM...",
         "continue": "Continue"

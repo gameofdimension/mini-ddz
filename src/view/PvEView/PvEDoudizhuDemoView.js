@@ -5,13 +5,9 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Divider from '@material-ui/core/Divider';
-import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
-import Select from '@material-ui/core/Select';
 import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -27,6 +23,7 @@ import {
     sortDoudizhuCards,
     translateCardData,
 } from '../../utils';
+import AgentSelector from '../../components/AgentSelector';
 import { usePvEGame } from './usePvEGame';
 
 const POSITIONS = [
@@ -194,17 +191,15 @@ function PvEDoudizhuDemoView() {
                             {t('doudizhu.role')}: {t(`doudizhu.${game.humanRole}`)}
                         </p>
                         {POSITIONS.filter(p => p.key !== game.humanRole).map(({ key, labelKey }) => (
-                            <FormControl key={key} style={{ margin: '12px', minWidth: 200 }}>
-                                <InputLabel>{t(labelKey)} ({t('configurable_battle.agent')})</InputLabel>
-                                <Select
+                            <div key={key} style={{ margin: '12px 0' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: '#555' }}>
+                                    {t(labelKey)} ({t('configurable_battle.agent')})
+                                </div>
+                                <AgentSelector
                                     value={game.agentTypes[key]}
-                                    onChange={(e) => game.setAgentTypes(prev => ({ ...prev, [key]: e.target.value }))}
-                                >
-                                    <MenuItem value="deep">{t('configurable_battle.agent_deep')}</MenuItem>
-                                    <MenuItem value="llm">{t('configurable_battle.agent_llm')}</MenuItem>
-                                    <MenuItem value="random">{t('configurable_battle.agent_random')}</MenuItem>
-                                </Select>
-                            </FormControl>
+                                    onChange={(v) => game.setAgentTypes(prev => ({ ...prev, [key]: v }))}
+                                />
+                            </div>
                         ))}
                         <div style={{ marginTop: '24px' }}>
                             <Button variant="contained" color="primary" onClick={game.handleStartGame}>

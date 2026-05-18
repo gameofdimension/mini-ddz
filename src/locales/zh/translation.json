@@ -53,8 +53,11 @@
         "new_battle": "新对局",
         "change_agents": "更换智能体",
         "agent_deep": "Deep (DouZero AI)",
+        "agent_deep_desc": "深度强化学习，本地快速推理",
         "agent_llm": "LLM (DeepSeek)",
+        "agent_llm_desc": "大语言模型，云端推理，有分析",
         "agent_random": "随机",
+        "agent_random_desc": "随机选择合法动作",
         "llm_analysis": "LLM推理过程",
         "waiting_analysis": "等待LLM响应...",
         "continue": "继续"

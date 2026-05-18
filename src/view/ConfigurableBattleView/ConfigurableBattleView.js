@@ -5,27 +5,18 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
-import Select from '@material-ui/core/Select';
 import { Layout } from 'element-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import '../../assets/gameview.scss';
+import AgentSelector from '../../components/AgentSelector';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
 import { douzeroDemoUrl } from '../../utils/config';
 
 const TURN_DELAY_MS = 2000;
-
-const AGENT_OPTIONS = [
-    { value: 'deep', labelKey: 'configurable_battle.agent_deep' },
-    { value: 'llm', labelKey: 'configurable_battle.agent_llm' },
-    { value: 'random', labelKey: 'configurable_battle.agent_random' },
-];
 
 const POSITIONS = [
     { key: 'landlord', labelKey: 'doudizhu.landlord' },
@@ -246,19 +237,15 @@ function ConfigurableBattleView() {
                 <Paper elevation={3} className="config-panel">
                     <h2>{t('configurable_battle.title')}</h2>
                     {POSITIONS.map(({ key, labelKey }) => (
-                        <FormControl key={key} style={{ margin: '12px', minWidth: 200 }}>
-                            <InputLabel>{t(labelKey)}</InputLabel>
-                            <Select
+                        <div key={key} style={{ margin: '12px 0' }}>
+                            <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: '#555' }}>
+                                {t(labelKey)}
+                            </div>
+                            <AgentSelector
                                 value={selections[key]}
-                                onChange={(e) => setSelections(prev => ({ ...prev, [key]: e.target.value }))}
-                            >
-                                {AGENT_OPTIONS.map(opt => (
-                                    <MenuItem key={opt.value} value={opt.value}>
-                                        {t(opt.labelKey)}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                                onChange={(v) => setSelections(prev => ({ ...prev, [key]: v }))}
+                            />
+                        </div>
                     ))}
                     <div style={{ marginTop: '24px' }}>
                         <Button
