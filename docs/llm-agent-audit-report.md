@@ -12,9 +12,9 @@
 | #3 | 前端空指针 | ✅ | c70eb93 |
 | #2 | LLMAgent 并发安全 | ✅ | 169627f |
 | #1 | `_live_sessions` 内存泄漏 | ✅ | c870952 |
-| #4 | 游戏逻辑重复 | 🔧 进行中 | - |
-| #5 | `/generate_llm_battle` 冗余 | ⏳ | - |
-| #6 | `_get_llm_players()` 浪费 | ⏳ | - |
+| #4 | 游戏逻辑重复 | ✅ | c653a1d (+测试 487ac44) |
+| #5 | `/generate_llm_battle` 冗余 | ✅ | 0caffce |
+| #6 | `_get_llm_players()` 浪费 | ✅ | 0caffce |
 | #8 | Agent 接口不一致 | ⏳ | - |
 | #9 | 硬编码字符串 | ⏳ | - |
 | #10 | eslint-disable | ⏳ | - |
