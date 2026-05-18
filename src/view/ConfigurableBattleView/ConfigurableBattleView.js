@@ -14,7 +14,7 @@ import AgentSelector from '../../components/AgentSelector';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
 import { douzeroDemoUrl } from '../../utils/config';
 
-const TURN_DELAY_MS = 2000;
+const TURN_DELAY_MS = 3000;
 const PAUSE_COUNTDOWN = 10; // seconds
 
 const POSITIONS = [
@@ -36,7 +36,7 @@ function createInitBoard() {
         hands: [[], [], []],
         latestAction: [[], [], []],
         currentPlayer: 0,
-        considerationTime: 2000,
+        considerationTime: 3000,
         turn: 0,
         gameStatus: 'ready',  // 'ready' | 'playing' | 'paused' | 'over'
         thinking: false,
@@ -77,7 +77,7 @@ function ConfigurableBattleView() {
                 hands: data.initHands.map(cardStr2Arr),
                 latestAction: [[], [], []],
                 currentPlayer: data.playerInfo.find(p => p.role === 'landlord')?.index ?? 0,
-                considerationTime: 2000,
+                considerationTime: 3000,
                 turn: 0,
                 gameStatus: 'playing',
                 thinking: true,
@@ -181,7 +181,7 @@ function ConfigurableBattleView() {
                 if (!prev.thinking || prev.paused) return prev;
                 // Step down by 1000ms so each value (2,1,0) is visible for ~1s
                 const t = prev.considerationTime - 1000;
-                return { ...prev, considerationTime: t >= 0 ? t : 2000 };
+                return { ...prev, considerationTime: t >= 0 ? t : 3000 };
             });
         }, 1000);
         return () => clearInterval(interval);
@@ -259,7 +259,7 @@ function ConfigurableBattleView() {
                 hands: data.initHands.map(cardStr2Arr),
                 latestAction: [[], [], []],
                 currentPlayer: data.playerInfo.find(p => p.role === 'landlord')?.index ?? 0,
-                considerationTime: 2000,
+                considerationTime: 3000,
                 turn: 0,
                 gameStatus: 'playing',
                 thinking: true,
