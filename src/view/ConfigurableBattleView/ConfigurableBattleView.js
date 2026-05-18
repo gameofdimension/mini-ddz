@@ -19,7 +19,7 @@ import '../../assets/gameview.scss';
 import { DoudizhuGameBoard } from '../../components/GameBoard';
 import { douzeroDemoUrl } from '../../utils/config';
 
-const TURN_DELAY_MS = 800;
+const TURN_DELAY_MS = 2000;
 
 const AGENT_OPTIONS = [
     { value: 'deep', labelKey: 'configurable_battle.agent_deep' },
