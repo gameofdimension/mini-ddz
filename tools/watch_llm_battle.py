@@ -61,6 +61,21 @@ def cards_display(env_cards):
     return " ".join(CARD_NAMES[EnvCard2RealCard[c]] for c in sorted(env_cards, reverse=True))
 
 
+def cards_display_with_played(hand, action):
+    """Show hand with played cards dimmed so the reader can see what was chosen."""
+    from collections import Counter
+    action_counts = Counter(action)
+    parts = []
+    for c in sorted(hand, reverse=True):
+        name = CARD_NAMES[EnvCard2RealCard[c]]
+        if action_counts.get(c, 0) > 0:
+            parts.append(f"\033[2m{name}\033[0m")
+            action_counts[c] -= 1
+        else:
+            parts.append(name)
+    return " ".join(parts)
+
+
 def move_type_display(env_cards):
     if not env_cards:
         return MOVE_TYPE_NAMES[md.TYPE_0_PASS]
@@ -102,7 +117,7 @@ def run_one_game(players, verbose=True):
 
     while True:
         cp = gs["current_player"]
-        hand_before = gs["current_hands_plain"][cp]
+        hand_before = gs["current_hands_plain"][cp].copy()
 
         if not hand_before:
             break
@@ -110,7 +125,6 @@ def run_one_game(players, verbose=True):
         # Determine agent type for display
         is_llm = isinstance(players[cp], LLMAgent)
         is_random = isinstance(players[cp], RandomAgent)
-        is_ai = is_llm or is_random
 
         # Compute legal actions for display (step_game computes them too, but we
         # need the count before the call for the "thinking" message)
@@ -128,8 +142,8 @@ def run_one_game(players, verbose=True):
                 agent_type = "RND"
             else:
                 agent_type = "Deep"
-            hl = "\033[1;36m" if is_ai else ""
-            rst = "\033[0m" if is_ai else ""
+            hl = "\033[1;36m" if is_llm else ""
+            rst = "\033[0m" if is_llm else ""
             print(f"{hl}--- 第 {turn + 1} 回合: {ROLE_NAMES[cp]} [{agent_type}] ---{rst}")
             if is_llm:
                 print(f"    正在思考 ({len(legal_actions)} 个合法动作)...")
@@ -161,11 +175,14 @@ def run_one_game(players, verbose=True):
             if is_llm:
                 print(f"    思考耗时: {elapsed:.1f}s")
             hand_after = gs["current_hands_plain"][cp]
-            print(f"    手牌 ({len(hand_before)}张): {cards_display(hand_before)}")
+            if action:
+                print(f"    手牌 ({len(hand_before)}张): {cards_display_with_played(hand_before, action)}")
+            else:
+                print(f"    手牌 ({len(hand_before)}张): {cards_display(hand_before)}")
             if rival_move:
                 print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
             action_line = f"    → 出牌: {cards_display(action)}  [{move_type_display(action)}]"
-            if not is_ai and step["info"]["values"]:
+            if not is_llm and not is_random and step["info"]["values"]:
                 val = list(step["info"]["values"].values())[0]
                 action_line += f"  (预期收益: {val:.4f})"
             hl2 = "\033[1;36m" if is_llm else ""
