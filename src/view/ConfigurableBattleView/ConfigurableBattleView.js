@@ -201,15 +201,14 @@ function ConfigurableBattleView() {
             setPauseCountdown(remaining);
             countdownRef.current = setInterval(() => {
                 remaining -= 1;
-                setPauseCountdown(remaining);
                 if (remaining <= 0) {
                     clearInterval(countdownRef.current);
                     countdownRef.current = null;
-                    setTimeout(() => {
-                        pollingRef.current = true;
-                        setBoard(b => ({ ...b, paused: false, thinking: true }));
-                    }, 800);
+                    pollingRef.current = true;
+                    setBoard(b => ({ ...b, paused: false, thinking: true }));
+                    return;
                 }
+                setPauseCountdown(remaining);
             }, 1000);
         } else {
             setPauseCountdown(0);
