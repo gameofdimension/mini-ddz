@@ -12,7 +12,7 @@ import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Layout } from 'element-react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import '../../assets/gameview.scss';
@@ -47,6 +47,13 @@ const gameSpeedMap = [
 function PvEDoudizhuDemoView() {
     const { t, i18n } = useTranslation();
     const game = usePvEGame(t);
+    const analysisRef = useRef(null);
+
+    useEffect(() => {
+        if (analysisRef.current) {
+            analysisRef.current.scrollTop = analysisRef.current.scrollHeight;
+        }
+    }, [game.llmAnalysis]);
 
     const handleLocaleChange = (newLocale) => {
         localStorage.setItem('LOCALE', newLocale);
@@ -286,7 +293,7 @@ function PvEDoudizhuDemoView() {
                         </div>
                     </Layout.Col>
                     <Layout.Col span="5" style={{ height: '100%' }}>
-                        <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ overflow: 'auto' }}>
+                        <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ overflow: 'auto' }} ref={analysisRef}>
                             <div style={{ padding: '16px' }}>
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
                                     {t('configurable_battle.llm_analysis')}
