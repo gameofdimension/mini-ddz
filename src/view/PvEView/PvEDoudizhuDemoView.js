@@ -214,7 +214,7 @@ function PvEDoudizhuDemoView() {
                 <div className={'doudizhu-view-container'}>
                     <Layout.Row style={{ height: '540px' }}>
                         <Layout.Col style={{ height: '100%' }} span="5">
-                            <Paper className={'doudizhu-probability-paper'} elevation={3}>
+                            <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ height: '100%', overflow: 'auto' }}>
                             {game.gameDataRef.current.playerInfo.length > 0 && game.gameState.currentPlayer !== null ? (
                                 <div style={{ padding: '16px' }}>
                                     <span style={{ textAlign: 'center', marginBottom: '8px', display: 'block' }}>
@@ -294,6 +294,7 @@ function PvEDoudizhuDemoView() {
                                 {game.llmAnalysis ? (
                                     <div style={{
                                         fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
+                                        wordBreak: 'break-word', overflowWrap: 'break-word',
                                         color: '#333', backgroundColor: '#e3f2fd',
                                         borderLeft: '3px solid #1976d2',
                                         padding: '8px 10px', borderRadius: '0 4px 4px 0',
