@@ -14,9 +14,8 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pve_server"))
 
 from card_maps import EnvCard2RealCard
-from deck import _assign_card_suits, _deal_cards
 from deep import DeepAgent
-from game import InfoSet, _flatten_action_seq, _get_legal_card_play_actions
+from game import _get_legal_card_play_actions, init_game, step_game
 from llm_agent import LLMAgent
 from random_agent import RandomAgent
 
@@ -61,7 +60,6 @@ def cards_display(env_cards):
     return " ".join(CARD_NAMES[EnvCard2RealCard[c]] for c in sorted(env_cards, reverse=True))
 
 
-
 def move_type_display(env_cards):
     if not env_cards:
         return MOVE_TYPE_NAMES[md.TYPE_0_PASS]
@@ -69,154 +67,130 @@ def move_type_display(env_cards):
     return MOVE_TYPE_NAMES.get(move_type["type"], f"未知(move_type={move_type})")
 
 
+def _get_agent_label(player, role_key):
+    """Return a human-readable label for an agent instance."""
+    if isinstance(player, LLMAgent):
+        return f"LLM-{role_key}"
+    if isinstance(player, RandomAgent):
+        return f"Random-{role_key}"
+    if isinstance(player, DeepAgent):
+        return f"DouZero-{role_key}"
+    return f"Unknown-{role_key}"
+
+
 # ---------------------------------------------------------------------------
-# Game runner — reuses generate_ai_battle_data for correct game logic
+# Game runner — uses init_game + step_game from game.py
 # ---------------------------------------------------------------------------
 
 def run_one_game(players, verbose=True):
     """Run a single game. Returns (winner_pos, turns, bombs, fallbacks).
     fallbacks: dict player_pos -> count of LLM fallback uses.
     """
-    cards = _deal_cards()
-    hands_suits = {0: _assign_card_suits(cards[0]), 1: _assign_card_suits(cards[1]), 2: _assign_card_suits(cards[2])}
-    current_hands = {i: cards[i].copy() for i in range(3)}
-    current_suits = {i: hands_suits[i].copy() for i in range(3)}
-    init_hands_display = {i: " ".join(s for _, s in hands_suits[i]) for i in range(3)}
+    init_data, gs = init_game(players)
+    gs["max_turns"] = 200  # match previous behaviour
+
+    cards = gs["cards"]
 
     if verbose:
         print("--- 初始手牌 ---")
         for i in range(3):
-            print(f"  {ROLE_NAMES[i]} ({len(current_hands[i])}张): {cards_display(current_hands[i])}")
+            hand = gs["current_hands_plain"][i]
+            print(f"  {ROLE_NAMES[i]} ({len(hand)}张): {cards_display(hand)}")
         print(f"  底牌: {cards_display(cards['three_landlord_cards'])}")
         print()
 
-    current_player = 0
-    last_move = []
-    last_move_player = -1
-    card_play_action_seq = [[], [], []]
-    played_cards = [[], [], []]
-    bomb_num = 0
-    turn = 0
-    max_turns = 200
+    while True:
+        cp = gs["current_player"]
+        hand_before = gs["current_hands_plain"][cp]
 
-    while turn < max_turns:
-        if not current_hands[current_player]:
+        if not hand_before:
             break
 
-        rival_move = last_move.copy() if last_move_player >= 0 and last_move_player != current_player else []
-        legal_actions = _get_legal_card_play_actions(current_hands[current_player].copy(), rival_move)
-
-        last_moves = [[], [], []]
-        if last_move_player >= 0 and last_move:
-            last_moves[last_move_player] = last_move.copy()
-
-        infoset = InfoSet(
-            player_position=current_player,
-            player_hand_cards=current_hands[current_player].copy(),
-            other_hand_cards=sorted(
-                [c for i in range(3) if i != current_player for c in current_hands[i]], reverse=True
-            ),
-            num_cards_left=[len(current_hands[i]) for i in range(3)],
-            three_landlord_cards=cards["three_landlord_cards"].copy(),
-            card_play_action_seq=_flatten_action_seq(card_play_action_seq),
-            last_moves=last_moves,
-            played_cards=[p.copy() for p in played_cards],
-            bomb_num=bomb_num,
-            rival_move=rival_move,
-        )
-        infoset.legal_actions = legal_actions
-
-        is_llm = isinstance(players[current_player], LLMAgent)
-        is_random = isinstance(players[current_player], RandomAgent)
+        # Determine agent type for display
+        is_llm = isinstance(players[cp], LLMAgent)
+        is_random = isinstance(players[cp], RandomAgent)
         is_ai = is_llm or is_random
 
+        # Compute legal actions for display (step_game computes them too, but we
+        # need the count before the call for the "thinking" message)
+        last_move = gs["last_move"]
+        last_move_player = gs["last_move_player"]
+        rival_move = last_move.copy() if last_move_player >= 0 and last_move_player != cp else []
+        legal_actions = _get_legal_card_play_actions(hand_before.copy(), rival_move)
+
+        turn = gs["turn"]
+
         if verbose:
-            HL = "\033[1;36m" if is_ai else ""
-            RST = "\033[0m" if is_ai else ""
             if is_llm:
                 agent_type = "LLM"
             elif is_random:
                 agent_type = "RND"
             else:
                 agent_type = "Deep"
-            print(f"{HL}--- 第 {turn + 1} 回合: {ROLE_NAMES[current_player]} [{agent_type}] ---{RST}")
+            hl = "\033[1;36m" if is_ai else ""
+            rst = "\033[0m" if is_ai else ""
+            print(f"{hl}--- 第 {turn + 1} 回合: {ROLE_NAMES[cp]} [{agent_type}] ---{rst}")
             if is_llm:
                 print(f"    正在思考 ({len(legal_actions)} 个合法动作)...")
-                t0 = time.time()
 
-        actions, confidences = players[current_player].act(infoset)
-        action = actions[0] if actions else []
+        t0 = time.time()
+        step = step_game(players, gs)
 
+        # Extract the chosen action from game state (env format, from card_play_action_seq)
+        action = gs["card_play_action_seq"][cp][-1]
+
+        # Validate action is legal (defence against agent bugs)
         if action not in legal_actions:
             raise RuntimeError(
                 f"ILLEGAL ACTION: {cards_display(action)} not in legal_actions. "
-                f"Player {current_player} ({ROLE_NAMES[current_player]}), turn {turn + 1}. "
+                f"Player {cp} ({ROLE_NAMES[cp]}), turn {turn + 1}. "
                 f"rival_move: {cards_display(rival_move)}. "
-                f"hand: {cards_display(current_hands[current_player])}. "
+                f"hand: {cards_display(hand_before)}. "
                 f"legal: {[cards_display(a) for a in legal_actions]}"
             )
 
         if not verbose:
             if is_llm:
-                sys.stderr.write(f"\r  LLM thinking (turn {turn + 1}, {len(legal_actions)} actions)...")
+                sys.stderr.write(f"\r  LLM thinking (turn {step['turn']}, {len(legal_actions)} actions)...")
                 sys.stderr.flush()
 
-        if is_llm and verbose:
-            elapsed = time.time() - t0
-            print(f"    思考耗时: {elapsed:.1f}s")
+        elapsed = time.time() - t0
 
         if verbose:
-            print(f"    手牌 ({len(current_hands[current_player])}张): {cards_display(current_hands[current_player])}")
+            if is_llm:
+                print(f"    思考耗时: {elapsed:.1f}s")
+            hand_after = gs["current_hands_plain"][cp]
+            print(f"    手牌 ({len(hand_before)}张): {cards_display(hand_before)}")
             if rival_move:
                 print(f"    对手出牌: {cards_display(rival_move)} ({move_type_display(rival_move)})")
             action_line = f"    → 出牌: {cards_display(action)}  [{move_type_display(action)}]"
-            if not is_ai:
-                conf = confidences[0] if confidences is not None and len(confidences) > 0 else 0.0
-                action_line += f"  (预期收益: {conf:.4f})"
-            HL2 = "\033[1;36m" if is_llm else ""
-            RST2 = "\033[0m" if is_llm else ""
-            print(f"{HL2}{action_line}{RST2}")
-
-        if action:
-            for card in action:
-                if card in current_hands[current_player]:
-                    current_hands[current_player].remove(card)
-                for i, (c, _s) in enumerate(current_suits[current_player]):
-                    if c == card:
-                        current_suits[current_player].pop(i)
-                        break
-            last_move = action.copy()
-            last_move_player = current_player
-            played_cards[current_player].extend(action)
-
-            move_type = md.get_move_type(action)
-            if move_type["type"] in (md.TYPE_4_BOMB, md.TYPE_5_KING_BOMB):
-                bomb_num += 1
-
-        card_play_action_seq[current_player].append(action)
-
-        if verbose:
-            print(f"    剩余: {len(current_hands[current_player])}张")
+            if not is_ai and step["info"]["values"]:
+                val = list(step["info"]["values"].values())[0]
+                action_line += f"  (预期收益: {val:.4f})"
+            hl2 = "\033[1;36m" if is_llm else ""
+            rst2 = "\033[0m" if is_llm else ""
+            print(f"{hl2}{action_line}{rst2}")
+            print(f"    剩余: {len(hand_after)}张")
             print()
 
-        if not current_hands[current_player]:
+        if step["gameOver"]:
+            winner = step["winner"]
             if verbose:
                 print("=" * 60)
-                if current_player == 0:
+                if winner == 0:
                     print("  地主胜利!")
                 else:
-                    print(f"  农民胜利! ({ROLE_NAMES[current_player]})")
-                print(f"  总回合数: {turn + 1}")
-                print(f"  炸弹数: {bomb_num}")
+                    print(f"  农民胜利! ({ROLE_NAMES[winner]})")
+                print(f"  总回合数: {step['turn']}")
+                print(f"  炸弹数: {step['bombNum']}")
                 print("=" * 60)
-            fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent) and p.fallback_count > 0}
-            return current_player, turn + 1, bomb_num, fallbacks
+            fallbacks = {pos: p.fallback_count for pos, p in enumerate(players)
+                         if isinstance(p, LLMAgent) and p.fallback_count > 0}
+            return winner, step["turn"], step["bombNum"], fallbacks
 
-        current_player = (current_player + 1) % 3
-        turn += 1
-
-    fallbacks = {pos: p.fallback_count for pos, p in enumerate(players) if isinstance(p, LLMAgent) and p.fallback_count > 0}
-    return -1, turn, bomb_num, fallbacks
+    fallbacks = {pos: p.fallback_count for pos, p in enumerate(players)
+                 if isinstance(p, LLMAgent) and p.fallback_count > 0}
+    return -1, gs["turn"], gs["bomb_num"], fallbacks
 
 
 # ---------------------------------------------------------------------------
@@ -259,13 +233,8 @@ def main():
         print("=" * 60)
         print()
         for i, p in enumerate(players):
-            if isinstance(p, LLMAgent):
-                agent_label = "LLMAgent 🤖"
-            elif isinstance(p, RandomAgent):
-                agent_label = "RandomAgent 🎲"
-            else:
-                agent_label = "DeepAgent 🧠"
-            print(f"  {ROLE_NAMES[i]:　<6} (Player {i}): {agent_label}")
+            agent_label = _get_agent_label(p, {0: "landlord", 1: "down", 2: "up"}[i])
+            print(f"  {ROLE_NAMES[i]}  (Player {i}): {agent_label}")
         print()
 
     total_turns = 0
