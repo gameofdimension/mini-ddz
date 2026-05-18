@@ -599,7 +599,6 @@ export function usePvEGame(t) {
                 requestApiPlay();
             } else {
                 setPredictionRes({ prediction: [], hands: [] });
-        setLlmAnalysis('');
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
