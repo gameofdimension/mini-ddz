@@ -175,10 +175,6 @@ try:
         move = m["move"]
         print(f"    Player {p}: {move}")
 
-finally:
-    # Restore default
-    os.environ["LLM_AGENT_POSITIONS"] = "0,1,2"
-
 
 # ---------------------------------------------------------------------------
 # Summary
