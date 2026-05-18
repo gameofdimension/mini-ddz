@@ -18,8 +18,36 @@ app = Flask(__name__)
 
 # In-memory store for live battle sessions: session_id → {players, game_state, created_at}
 _live_sessions: dict = {}
+SESSION_TTL_SECONDS = 1800  # 30 minutes
+MAX_SESSIONS = 100
+
 CORS(app)
 logger = logging.getLogger(__name__)
+
+
+def _cleanup_expired_sessions() -> None:
+    """Remove sessions older than SESSION_TTL_SECONDS."""
+    now = time.time()
+    expired = [
+        sid for sid, s in _live_sessions.items()
+        if now - s["created_at"] > SESSION_TTL_SECONDS
+    ]
+    for sid in expired:
+        _live_sessions.pop(sid)
+        logger.info("Cleaned up expired session %s", sid)
+
+
+def _evict_if_needed(keep_count: int) -> None:
+    """Evict oldest sessions to stay within MAX_SESSIONS."""
+    if len(_live_sessions) >= MAX_SESSIONS:
+        sorted_sessions = sorted(
+            _live_sessions.items(), key=lambda item: item[1]["created_at"]
+        )
+        to_evict = len(_live_sessions) - keep_count
+        for i in range(to_evict):
+            sid = sorted_sessions[i][0]
+            _live_sessions.pop(sid)
+            logger.warning("Evicted session %s (max capacity %d)", sid, MAX_SESSIONS)
 
 # Lazy-loaded AI players
 _players = None
@@ -297,6 +325,10 @@ def live_battle_start():
 
         players = _make_players(landlord_type, down_type, up_type)
         init_data, game_state = init_game(players)
+
+        _cleanup_expired_sessions()
+        _evict_if_needed(keep_count=0)
+
         session_id = str(uuid.uuid4())[:8]
 
         _live_sessions[session_id] = {
@@ -336,6 +368,11 @@ def live_battle_next(session_id):
         session = _live_sessions.get(session_id)
         if session is None:
             return jsonify({"status": 1, "message": "Session not found"})
+
+        if time.time() - session["created_at"] > SESSION_TTL_SECONDS:
+            _live_sessions.pop(session_id, None)
+            logger.info("Session %s expired on access, cleaned up", session_id)
+            return jsonify({"status": 1, "message": "Session expired"})
 
         step = step_game(session["players"], session["game_state"])
         if step["gameOver"]:

@@ -571,3 +571,115 @@ class TestGenerateLLMBattle:
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["status"] == -1
+
+
+class TestLiveBattleSessions:
+    """Test live battle session lifecycle and cleanup."""
+
+    SESSION_TTL = 1800  # 30 minutes in seconds
+
+    def test_expired_sessions_cleaned_on_start(self, client, monkeypatch):
+        """Expired sessions should be removed when a new session starts."""
+        import run_douzero
+
+        # Set a very short TTL for testing
+        monkeypatch.setattr(run_douzero, "SESSION_TTL_SECONDS", 0)
+
+        # Create a session — it will be instantly expired (TTL=0)
+        run_douzero._live_sessions.clear()
+        run_douzero._live_sessions["expired1"] = {
+            "players": [],
+            "game_state": {},
+            "created_at": 0,  # Very old timestamp
+        }
+
+        assert "expired1" in run_douzero._live_sessions
+
+        # Start a new battle — this should trigger cleanup
+        res = client.post("/live-battle/start",
+                          json={"landlord": "deep", "down": "deep", "up": "deep"})
+        assert res.status_code == 200
+        data = json.loads(res.data)
+
+        # Expired session should be gone
+        assert "expired1" not in run_douzero._live_sessions
+
+        # New session should exist
+        session_id = data.get("session_id")
+        assert session_id is not None
+        assert session_id in run_douzero._live_sessions
+
+        run_douzero._live_sessions.clear()
+
+    def test_active_session_not_cleaned(self, client, monkeypatch):
+        """Active (non-expired) sessions should survive cleanup."""
+        import run_douzero
+        import time
+
+        monkeypatch.setattr(run_douzero, "SESSION_TTL_SECONDS", 3600)
+
+        run_douzero._live_sessions.clear()
+        run_douzero._live_sessions["active1"] = {
+            "players": [],
+            "game_state": {},
+            "created_at": time.time(),
+        }
+
+        res = client.post("/live-battle/start",
+                          json={"landlord": "deep", "down": "deep", "up": "deep"})
+        assert res.status_code == 200
+
+        # Active session should still be there
+        assert "active1" in run_douzero._live_sessions
+
+        run_douzero._live_sessions.clear()
+
+    def test_max_session_limit(self, client, monkeypatch):
+        """When max sessions is reached, oldest expired sessions are evicted."""
+        import run_douzero
+
+        monkeypatch.setattr(run_douzero, "SESSION_TTL_SECONDS", 0)
+        monkeypatch.setattr(run_douzero, "MAX_SESSIONS", 3)
+
+        run_douzero._live_sessions.clear()
+        for i in range(5):
+            run_douzero._live_sessions[f"old{i}"] = {
+                "players": [],
+                "game_state": {},
+                "created_at": float(i),
+            }
+
+        assert len(run_douzero._live_sessions) == 5
+
+        res = client.post("/live-battle/start",
+                          json={"landlord": "deep", "down": "deep", "up": "deep"})
+        assert res.status_code == 200
+        data = json.loads(res.data)
+        session_id = data.get("session_id")
+        assert session_id is not None
+
+        # Oldest expired sessions should be evicted; new session should exist
+        assert len(run_douzero._live_sessions) <= 3
+        assert session_id in run_douzero._live_sessions
+
+        run_douzero._live_sessions.clear()
+
+    def test_expired_session_on_next_returns_error(self, client, monkeypatch):
+        """Accessing an expired session via /next should return an error."""
+        import run_douzero
+
+        monkeypatch.setattr(run_douzero, "SESSION_TTL_SECONDS", 0)
+
+        run_douzero._live_sessions.clear()
+        run_douzero._live_sessions["expired_next"] = {
+            "players": [],
+            "game_state": {},
+            "created_at": 0,
+        }
+
+        res = client.post("/live-battle/expired_next/next")
+        assert res.status_code == 200
+        data = json.loads(res.data)
+        assert data["status"] == 1
+
+        run_douzero._live_sessions.clear()
