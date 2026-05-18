@@ -118,6 +118,7 @@ function ConfigurableBattleView() {
                     next.hands = step.hands.map(cardStr2Arr);
                     next.currentPlayer = step.currentPlayer;
                     next.turn = step.turn;
+                    next.considerationTime = 2000;
                     next.thinking = !step.gameOver;
                     // Pause after LLM agent plays so the user can read the analysis
                     next.paused = !!step.analysis && !step.gameOver;
@@ -173,6 +174,20 @@ function ConfigurableBattleView() {
             pollingRef.current = false;
         };
     }, [sessionId, board.gameStatus, board.paused, t]);
+
+    // Countdown animation for the timer-text component
+    useEffect(() => {
+        if (!board.thinking || board.paused) return;
+        const tick = 100;
+        const interval = setInterval(() => {
+            setBoard(prev => {
+                if (!prev.thinking || prev.paused) return prev;
+                const t = prev.considerationTime - tick;
+                return { ...prev, considerationTime: t > 0 ? t : 0 };
+            });
+        }, tick);
+        return () => clearInterval(interval);
+    }, [board.thinking, board.paused]);
 
     // Auto-scroll analysis panel to bottom when new analysis is added
     useEffect(() => {
