@@ -159,7 +159,8 @@ class TestAct:
             three_landlord_cards=[3, 4, 5],
         )
 
-        with patch.object(agent, "_call_llm", side_effect=RuntimeError("API down")):
+        with patch.object(agent, "_call_llm", side_effect=RuntimeError("API down")), \
+             patch("llm_agent._save_failed_request"):
             actions, confs = agent.act(infoset)
 
         assert actions == [[6]]
