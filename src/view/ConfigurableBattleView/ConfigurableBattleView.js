@@ -7,7 +7,6 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Paper from '@material-ui/core/Paper';
-import { Layout } from 'element-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
@@ -320,28 +319,24 @@ function ConfigurableBattleView() {
             </div>
 
             <div className={'doudizhu-view-container'}>
-                <Layout.Row style={{ height: '540px' }}>
-                    <Layout.Col span="4" />
-                    <Layout.Col style={{ height: '100%' }} span="14">
-                        <div style={{ height: '100%' }}>
-                            <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
-                                <DoudizhuGameBoard
-                                    playerInfo={board.playerInfo}
-                                    hands={board.hands}
-                                    latestAction={board.latestAction}
-                                    mainPlayerId={0}
-                                    currentPlayer={board.currentPlayer}
-                                    considerationTime={board.considerationTime}
-                                    turn={board.turn}
-                                    gameStatus={board.thinking ? 'playing' : board.gameStatus}
-                                    gamePlayable={false}
-                                    showCardBack={false}
-                                />
-                            </Paper>
-                        </div>
-                    </Layout.Col>
-                    <Layout.Col span="1" />
-                    <Layout.Col span="5" style={{ height: '100%' }}>
+                <div style={{ height: '540px', display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                    <div style={{ flex: '0 0 750px', height: '100%' }}>
+                        <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
+                            <DoudizhuGameBoard
+                                playerInfo={board.playerInfo}
+                                hands={board.hands}
+                                latestAction={board.latestAction}
+                                mainPlayerId={0}
+                                currentPlayer={board.currentPlayer}
+                                considerationTime={board.considerationTime}
+                                turn={board.turn}
+                                gameStatus={board.thinking ? 'playing' : board.gameStatus}
+                                gamePlayable={false}
+                                showCardBack={false}
+                            />
+                        </Paper>
+                    </div>
+                    <div style={{ flex: '0 0 260px', height: '100%' }}>
                         <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ height: '100%', overflow: 'auto' }}>
                             <div style={{ padding: '16px' }}>
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
@@ -385,8 +380,8 @@ function ConfigurableBattleView() {
                                 </div>
                             </div>
                         </Paper>
-                    </Layout.Col>
-                </Layout.Row>
+                    </div>
+                </div>
             </div>
 
             {board.thinking && !board.paused && (
