@@ -259,7 +259,7 @@ function PvEDoudizhuDemoView() {
                             </div>
                         </Paper>
                     </Layout.Col>
-                    <Layout.Col style={{ height: '100%' }} span="16">
+                    <Layout.Col style={{ height: '100%' }} span="17">
                         <div style={{ height: '100%' }}>
                             <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
                                 <DoudizhuGameBoard
@@ -285,7 +285,7 @@ function PvEDoudizhuDemoView() {
                             </Paper>
                         </div>
                     </Layout.Col>
-                    <Layout.Col span="5" style={{ height: '100%' }}>
+                    <Layout.Col span="4" style={{ height: '100%' }}>
                         <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ height: '100%', overflow: 'auto' }}>
                             <div style={{ padding: '16px' }}>
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
