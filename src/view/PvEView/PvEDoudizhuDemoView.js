@@ -291,16 +291,38 @@ function PvEDoudizhuDemoView() {
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
                                     {t('configurable_battle.llm_analysis')}
                                 </div>
-                                {game.llmAnalysis ? (
-                                    <div style={{
-                                        fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-word', overflowWrap: 'break-word',
-                                        color: '#333', backgroundColor: '#e3f2fd',
-                                        borderLeft: '3px solid #1976d2',
-                                        padding: '8px 10px', borderRadius: '0 4px 4px 0',
-                                    }}>
-                                        {game.llmAnalysis}
-                                    </div>
+                                {game.llmAnalysis.length > 0 ? (
+                                    game.llmAnalysis.map((item, i) => {
+                                        const colors = {
+                                            0: { border: '#1976d2', bg: '#e3f2fd', label: '#1565c0' },
+                                            1: { border: '#2e7d32', bg: '#e8f5e9', label: '#1b5e20' },
+                                            2: { border: '#e65100', bg: '#fff3e0', label: '#bf360c' },
+                                        };
+                                        const c = colors[item.playerIdx] || colors[0];
+                                        return (
+                                            <div key={i} style={{
+                                                borderLeft: `3px solid ${c.border}`,
+                                                backgroundColor: c.bg,
+                                                marginBottom: '10px',
+                                                padding: '8px 10px',
+                                                borderRadius: '0 4px 4px 0',
+                                            }}>
+                                                <div style={{
+                                                    fontWeight: 700, fontSize: '12px',
+                                                    color: c.label, marginBottom: '4px',
+                                                }}>
+                                                    {item.agentName}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word', overflowWrap: 'break-word',
+                                                    color: '#333',
+                                                }}>
+                                                    {item.text}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
                                 ) : (
                                     <div style={{ color: '#999', fontSize: '13px' }}>
                                         {t('configurable_battle.waiting_analysis')}

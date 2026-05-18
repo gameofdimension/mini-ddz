@@ -72,7 +72,7 @@ export function usePvEGame(t) {
     const [isPassDisabled, setIsPassDisabled] = useState(true);
     const [isHintDisabled, setIsHintDisabled] = useState(true);
     const [predictionRes, setPredictionRes] = useState({ prediction: [], hands: [] });
-    const [llmAnalysis, setLlmAnalysis] = useState('');
+    const [llmAnalysis, setLlmAnalysis] = useState([]);
     const [hideRivalHand, setHideRivalHand] = useState(true);
     const [hidePredictionArea, setHidePredictionArea] = useState(true);
     const [statisticRows, setStatisticRows] = useState([]);
@@ -374,7 +374,14 @@ export function usePvEGame(t) {
                         hands: gameState.hands[cp].slice(),
                     });
                     if (data.analysis) {
-                        setLlmAnalysis(data.analysis);
+                        const posKey = POS_KEY[playerPos];
+                        const labelMap = { deep: 'DouZero', llm: 'LLM', random: 'Random' };
+                        const agentName = labelMap[agentTypes[posKey]] || agentTypes[posKey];
+                        setLlmAnalysis(prev => [...prev, {
+                            agentName,
+                            playerIdx: playerPos,
+                            text: data.analysis,
+                        }]);
                     }
                     if (Object.keys(data.result).length === 1) {
                         bestAction = Object.keys(data.result)[0];
@@ -580,7 +587,7 @@ export function usePvEGame(t) {
         setGameState({ hands: [[], [], []], latestAction: [[], [], []], currentPlayer: null, turn: 0 });
         setSelectedCards([]);
         setPredictionRes({ prediction: [], hands: [] });
-        setLlmAnalysis('');
+        setLlmAnalysis([]);
         setHideRivalHand(hidePredictionArea);
         setGameStatus('ready');
         setIsGameEndDialogOpen(false);
