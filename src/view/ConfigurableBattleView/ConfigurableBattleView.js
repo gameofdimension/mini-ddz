@@ -137,9 +137,11 @@ function ConfigurableBattleView() {
                         next.gameStatus = 'over';
                         const winnerInfo = next.playerInfo[step.winner];
                         if (winnerInfo) {
-                            const role = t(winnerInfo.role === 'landlord'
-                                ? 'doudizhu.landlord'
-                                : 'doudizhu.landlord_down');
+                            const role = winnerInfo.role === 'landlord'
+                                ? t('doudizhu.landlord')
+                                : winnerInfo.index === 1
+                                    ? t('doudizhu.landlord_down')
+                                    : t('doudizhu.landlord_up');
                             setGameEndText(`${role} (${winnerInfo.agentInfo.name}) ${t('game_playback.game_ends')}`);
                         } else {
                             setGameEndText(t('game_playback.game_ends'));
