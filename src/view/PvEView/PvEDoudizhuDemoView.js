@@ -213,33 +213,7 @@ function PvEDoudizhuDemoView() {
             {game.gameStatus !== 'configuring' && (
                 <div className={'doudizhu-view-container'}>
                     <Layout.Row style={{ height: '540px' }}>
-                        <Layout.Col style={{ height: '100%' }} span="17">
-                            <div style={{ height: '100%' }}>
-                                <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
-                                    <DoudizhuGameBoard
-                                        showCardBack={game.gameStatus === 'playing' && game.hideRivalHand}
-                                        handleSelectRole={game.handleSelectRole}
-                                        isPassDisabled={game.isPassDisabled}
-                                        isHintDisabled={game.isHintDisabled}
-                                        gamePlayable={true}
-                                        playerInfo={game.gameDataRef.current.playerInfo}
-                                        hands={game.gameState.hands}
-                                        selectedCards={game.selectedCards}
-                                        handleSelectedCards={game.handleSelectedCards}
-                                        latestAction={game.gameState.latestAction}
-                                        mainPlayerId={game.mainPlayerId}
-                                        currentPlayer={game.gameState.currentPlayer}
-                                        considerationTime={game.considerationTime}
-                                        turn={game.gameState.turn}
-                                        toggleFade={game.toggleFade}
-                                        gameStatus={game.gameStatus}
-                                        handleMainPlayerAct={game.handleMainPlayerAct}
-                                        handleLocaleChange={handleLocaleChange}
-                                    />
-                                </Paper>
-                            </div>
-                        </Layout.Col>
-                        <Layout.Col span="7" style={{ height: '100%' }}>
+                        <Layout.Col style={{ height: '100%' }} span="5">
                             <Paper className={'doudizhu-probability-paper'} elevation={3}>
                             {game.gameDataRef.current.playerInfo.length > 0 && game.gameState.currentPlayer !== null ? (
                                 <div style={{ padding: '16px' }}>
@@ -283,24 +257,55 @@ function PvEDoudizhuDemoView() {
                                 <div className={'probability-item'}>{computeProbabilityItem(1)}</div>
                                 <div className={'probability-item'}>{computeProbabilityItem(2)}</div>
                             </div>
-                            {game.llmAnalysis && (
-                                <>
-                                    <Divider />
-                                    <div style={{ padding: '12px 16px 8px' }}>
-                                        <div style={{ fontWeight: 700, fontSize: '12px', color: '#1565c0', marginBottom: '6px' }}>
-                                            {t('configurable_battle.llm_analysis')}
-                                        </div>
-                                        <div style={{
-                                            fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
-                                            color: '#333', backgroundColor: '#e3f2fd',
-                                            borderLeft: '3px solid #1976d2',
-                                            padding: '8px 10px', borderRadius: '0 4px 4px 0',
-                                        }}>
-                                            {game.llmAnalysis}
-                                        </div>
+                        </Paper>
+                    </Layout.Col>
+                    <Layout.Col style={{ height: '100%' }} span="12">
+                        <div style={{ height: '100%' }}>
+                            <Paper className={'doudizhu-gameboard-paper'} elevation={3}>
+                                <DoudizhuGameBoard
+                                    showCardBack={game.gameStatus === 'playing' && game.hideRivalHand}
+                                    handleSelectRole={game.handleSelectRole}
+                                    isPassDisabled={game.isPassDisabled}
+                                    isHintDisabled={game.isHintDisabled}
+                                    gamePlayable={true}
+                                    playerInfo={game.gameDataRef.current.playerInfo}
+                                    hands={game.gameState.hands}
+                                    selectedCards={game.selectedCards}
+                                    handleSelectedCards={game.handleSelectedCards}
+                                    latestAction={game.gameState.latestAction}
+                                    mainPlayerId={game.mainPlayerId}
+                                    currentPlayer={game.gameState.currentPlayer}
+                                    considerationTime={game.considerationTime}
+                                    turn={game.gameState.turn}
+                                    toggleFade={game.toggleFade}
+                                    gameStatus={game.gameStatus}
+                                    handleMainPlayerAct={game.handleMainPlayerAct}
+                                    handleLocaleChange={handleLocaleChange}
+                                />
+                            </Paper>
+                        </div>
+                    </Layout.Col>
+                    <Layout.Col span="7" style={{ height: '100%' }}>
+                        <Paper className={'doudizhu-probability-paper'} elevation={3} style={{ height: '100%', overflow: 'auto' }}>
+                            <div style={{ padding: '16px' }}>
+                                <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
+                                    {t('configurable_battle.llm_analysis')}
+                                </div>
+                                {game.llmAnalysis ? (
+                                    <div style={{
+                                        fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
+                                        color: '#333', backgroundColor: '#e3f2fd',
+                                        borderLeft: '3px solid #1976d2',
+                                        padding: '8px 10px', borderRadius: '0 4px 4px 0',
+                                    }}>
+                                        {game.llmAnalysis}
                                     </div>
-                                </>
-                            )}
+                                ) : (
+                                    <div style={{ color: '#999', fontSize: '13px' }}>
+                                        {t('configurable_battle.waiting_analysis')}
+                                    </div>
+                                )}
+                            </div>
                         </Paper>
                     </Layout.Col>
                 </Layout.Row>
