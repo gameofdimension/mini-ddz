@@ -173,18 +173,17 @@ function ConfigurableBattleView() {
     }, [sessionId, board.gameStatus, board.paused, t]);
 
     // Countdown animation for the timer-text component.
-    // Loops back to 2000 when it reaches 0 — keeps the UI alive while
-    // waiting for slow LLM responses.
+    // Cycles 2000→1000→0→2000→... so the timer pulses visibly.
     useEffect(() => {
         if (!board.thinking || board.paused) return;
-        const tick = 100;
         const interval = setInterval(() => {
             setBoard(prev => {
                 if (!prev.thinking || prev.paused) return prev;
-                const t = prev.considerationTime - tick;
-                return { ...prev, considerationTime: t > 0 ? t : 2000 };
+                // Step down by 1000ms so each value (2,1,0) is visible for ~1s
+                const t = prev.considerationTime - 1000;
+                return { ...prev, considerationTime: t >= 0 ? t : 2000 };
             });
-        }, tick);
+        }, 1000);
         return () => clearInterval(interval);
     }, [board.thinking, board.paused]);
 
