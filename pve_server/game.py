@@ -235,8 +235,10 @@ def step_game(players: list, gs: dict) -> dict:
     actions, confidences = players[cp].act(info_set)
     action = actions[0] if actions else []
 
+    # Agent protocol: act(info_set) -> (actions, confidences)
+    # Optional: LLMAgent also exposes last_analysis for display
     llm_analysis = ""
-    if hasattr(players[cp], "last_analysis"):
+    if isinstance(players[cp], LLMAgent):
         llm_analysis = players[cp].last_analysis or ""
 
     move_suit = _action_to_suit_format(action, hands_suits[cp])

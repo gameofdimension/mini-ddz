@@ -15,14 +15,14 @@
 | #4 | 游戏逻辑重复 | ✅ | c653a1d (+测试 487ac44) |
 | #5 | `/generate_llm_battle` 冗余 | ✅ | 0caffce |
 | #6 | `_get_llm_players()` 浪费 | ✅ | 0caffce |
-| #8 | Agent 接口不一致 | ⏳ | - |
-| #9 | 硬编码字符串 | ⏳ | - |
-| #10 | eslint-disable | ⏳ | - |
+| #8 | Agent 接口不一致 | ✅ | (doc + isinstance) |
+| #9 | 硬编码字符串 | ✅ | d4772a2 |
+| #10 | eslint-disable | ✅ | via #14 |
 | #11 | 集成测试残留 | ✅ | 6f868ee |
 | #12 | 单元测试副作用 | ✅ | bd4970b |
 | #13 | 异常类型字符串匹配 | ✅ | 6d8acd4 |
-| #14 | PvE 组件过长 | ⏳ | - |
-| #15 | isinstance 链 | ⏳ | - |
+| #14 | PvE 组件过长 | ✅ | 1f1f340 |
+| #15 | isinstance 链 | ✅ | (保留 — 可读性好) |
 
 ---
 
