@@ -89,10 +89,10 @@ class TestBuildUserMessage:
             bomb_num=0,
         )
         msg = agent._build_user_message(infoset)
-        assert "Player 0: landlord, Player 1: peasant" in msg
-        assert "Player 0 (landlord)" in msg
+        assert "玩家 0：地主，玩家 1：农民" in msg
+        assert "玩家 0（地主）" in msg
         assert "2 A A A A 5 4 3" in msg
-        assert "Player 0: 8, Player 1: 8, Player 2: 8" in msg
+        assert "玩家0: 8, 玩家1: 8, 玩家2: 8" in msg
         assert "pass" in msg
         assert "AAAA" in msg
         assert "5 4 3" in msg  # three landlord cards

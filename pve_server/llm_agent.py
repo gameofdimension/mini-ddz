@@ -54,54 +54,54 @@ def _save_call_log(filepath: str, call_idx: int, messages: List[Dict[str, str]],
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-SYSTEM_PROMPT = """You are an expert Dou Dizhu (Chinese Poker) player. Analyze the game state and choose the best move from the provided legal actions.
+SYSTEM_PROMPT = """你是一名斗地主高手。请分析当前游戏状态，从提供的合法出牌中选择最佳行动。
 
-## Card Encoding
-Each card is a single character: 3, 4, 5, 6, 7, 8, 9, T(10), J, Q, K, A, 2, X(Small Joker), D(Big Joker).
+## 牌编码
+每张牌用一个字符表示：3, 4, 5, 6, 7, 8, 9, T(10), J, Q, K, A, 2, X(小王), D(大王)。
 
-## Game Rules Summary
-- 54-card deck. 3 players: one landlord (20 cards) vs two peasants (17 cards each).
-- Card ranks (low to high): 3 < 4 < 5 < 6 < 7 < 8 < 9 < T < J < Q < K < A < 2 < X < D
-- Move types: single, pair, triple, triple+single, triple+pair, bomb (4 of a kind), king bomb (X+D), serial single (5+ consecutive), serial pair (3+ consecutive pairs), serial triple (2+ consecutive triples), serial triple+single, serial triple+pair, four+two singles, four+two pairs.
-- To beat the last opponent move, play a higher-ranked combination of the same move type, OR a bomb (4 of a kind) / king bomb (X+D). Bombs beat non-bomb moves. King bomb beats all.
-- "pass" in the legal actions list means you may skip. If "pass" is NOT in the list, you MUST play a card combination from the list.
-- Goal: be the first to empty your hand.
+## 游戏规则概要
+- 54张牌，3名玩家：1名地主（20张牌）对 2名农民（各17张牌）。
+- 牌的大小（从小到大）：3 < 4 < 5 < 6 < 7 < 8 < 9 < T < J < Q < K < A < 2 < X < D
+- 出牌类型：单张、对子、三张、三带一、三带二、炸弹（四张相同）、王炸（X+D）、顺子（5张及以上连续单张）、连对（3对及以上连续对子）、飞机（2组及以上连续三张）、飞机带单、飞机带双、四带二单、四带二双。
+- 要压过对手的牌，必须打出同类型且更大的牌，或使用炸弹（四张相同）/ 王炸（X+D）。炸弹可压非炸弹牌型。王炸最大。
+- 合法出牌列表中包含"pass"表示可以不出。如果列表中没有"pass"，则你必须从列表中选一种牌型出牌。
+- 目标：最先出完手中所有牌。
 
-## Output Format
-Respond with a JSON object only:
-{"analysis": "brief strategy reasoning", "action": "<card_string>", "confidence": 0.0-1.0}
+## 输出格式
+只回复一个 JSON 对象：
+{"analysis": "简要策略分析", "action": "<牌编码字符串>", "confidence": 0.0-1.0}
 
-- "action": concatenated card codes for the chosen move, e.g. "345" for a 3-4-5 straight, "33" for a pair of 3s, "pass" for skip.
-- Pick ONLY from the provided legal actions list."""
+- "action"：所选牌型的牌编码拼接，如 "345" 表示顺子 3-4-5，"33" 表示对 3，"pass" 表示不出。
+- 只能从提供的合法出牌列表中选择。"""
 
-USER_MESSAGE_TEMPLATE = """## Players
-Player 0: landlord, Player 1: peasant (landlord_down), Player 2: peasant (landlord_up)
+USER_MESSAGE_TEMPLATE = """## 玩家
+玩家 0：地主，玩家 1：农民（地主下家），玩家 2：农民（地主上家）
 
-## Your Position
-Player {position} ({role})
+## 你的位置
+玩家 {position}（{role}）
 
-## Three Landlord Cards
+## 三张地主牌
 {landlord_cards}
 
-## Play History
+## 出牌历史
 {history_str}
 
-## Your Hand
+## 你的手牌
 {hand_str}
 
-## Cards Remaining
+## 各玩家剩余牌数
 {cards_left}
 
-## Bombs Played
+## 已出炸弹数
 {bomb_num}
 
-## Last Opponent Move
+## 上一手对手出的牌
 {rival_str}
 
-## Legal Actions
+## 合法出牌
 {legal_str}
 
-Choose the single best action from the legal actions list above."""
+从以上合法出牌列表中选择最佳出牌。"""
 
 
 class LLMAgent:
@@ -173,7 +173,7 @@ class LLMAgent:
         """Build the user-message prompt from the current InfoSet."""
         # -- position & role
         position = infoset.player_position
-        role = "landlord" if position == 0 else "peasant"
+        role = "地主" if position == 0 else "农民"
 
         # -- three landlord cards (always 3 cards, visible to all players)
         landlord_cards = infoset.three_landlord_cards
@@ -186,14 +186,14 @@ class LLMAgent:
 
         # -- cards remaining per player
         cards_left = infoset.num_cards_left
-        cards_left_str = ", ".join(f"Player {i}: {cards_left[i]}" for i in range(3))
+        cards_left_str = ", ".join(f"玩家{i}: {cards_left[i]}" for i in range(3))
 
         # -- bomb count
         bomb_num = infoset.bomb_num
 
         # -- last opponent move
         rival_move = infoset.rival_move
-        rival_str = LLMAgent._env_action_to_str(rival_move) if rival_move else "none"
+        rival_str = LLMAgent._env_action_to_str(rival_move) if rival_move else "无"
 
         # -- play history (flattened sequence: p0, p1, p2, p0, ...)
         action_seq = infoset.card_play_action_seq
@@ -202,10 +202,10 @@ class LLMAgent:
             for i, action in enumerate(action_seq):
                 pid = i % 3
                 label = LLMAgent._env_action_to_str(action) if action else "pass"
-                lines.append(f"Player {pid}: {label}")
+                lines.append(f"玩家{pid}: {label}")
             history_str = "\n".join(lines)
         else:
-            history_str = "none"
+            history_str = "无"
 
         # -- legal actions
         legal_parts: List[str] = []

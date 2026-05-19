@@ -9,10 +9,11 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import Paper from '@material-ui/core/Paper';
 import Slider from '@material-ui/core/Slider';
+import Checkbox from '@material-ui/core/Checkbox';
 import Switch from '@material-ui/core/Switch';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Layout } from 'element-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../assets/doudizhu.scss';
 import '../../assets/gameview.scss';
@@ -47,6 +48,7 @@ const gameSpeedMap = [
 function PvEDoudizhuDemoView() {
     const { t, i18n } = useTranslation();
     const game = usePvEGame(t);
+    const [showLlmAnalysis, setShowLlmAnalysis] = useState(false);
     const analysisRef = useRef(null);
 
     useEffect(() => {
@@ -298,41 +300,47 @@ function PvEDoudizhuDemoView() {
                                 <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>
                                     {t('configurable_battle.llm_analysis')}
                                 </div>
-                                {game.llmAnalysis.length > 0 ? (
-                                    game.llmAnalysis.map((item, i) => {
-                                        const colors = {
-                                            0: { border: '#1976d2', bg: '#e3f2fd', label: '#1565c0' },
-                                            1: { border: '#2e7d32', bg: '#e8f5e9', label: '#1b5e20' },
-                                            2: { border: '#e65100', bg: '#fff3e0', label: '#bf360c' },
-                                        };
-                                        const c = colors[item.playerIdx] || colors[0];
-                                        return (
-                                            <div key={i} style={{
-                                                borderLeft: `3px solid ${c.border}`,
-                                                backgroundColor: c.bg,
-                                                marginBottom: '10px',
-                                                padding: '8px 10px',
-                                                borderRadius: '0 4px 4px 0',
-                                            }}>
-                                                <div style={{
-                                                    fontWeight: 700, fontSize: '12px',
-                                                    color: c.label, marginBottom: '4px',
+                                {showLlmAnalysis ? (
+                                    game.llmAnalysis.length > 0 ? (
+                                        game.llmAnalysis.map((item, i) => {
+                                            const colors = {
+                                                0: { border: '#1976d2', bg: '#e3f2fd', label: '#1565c0' },
+                                                1: { border: '#2e7d32', bg: '#e8f5e9', label: '#1b5e20' },
+                                                2: { border: '#e65100', bg: '#fff3e0', label: '#bf360c' },
+                                            };
+                                            const c = colors[item.playerIdx] || colors[0];
+                                            return (
+                                                <div key={i} style={{
+                                                    borderLeft: `3px solid ${c.border}`,
+                                                    backgroundColor: c.bg,
+                                                    marginBottom: '10px',
+                                                    padding: '8px 10px',
+                                                    borderRadius: '0 4px 4px 0',
                                                 }}>
-                                                    {item.agentName}
+                                                    <div style={{
+                                                        fontWeight: 700, fontSize: '12px',
+                                                        color: c.label, marginBottom: '4px',
+                                                    }}>
+                                                        {item.agentName}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
+                                                        wordBreak: 'break-word', overflowWrap: 'break-word',
+                                                        color: '#333',
+                                                    }}>
+                                                        {item.text}
+                                                    </div>
                                                 </div>
-                                                <div style={{
-                                                    fontSize: '13px', lineHeight: '1.55', whiteSpace: 'pre-wrap',
-                                                    wordBreak: 'break-word', overflowWrap: 'break-word',
-                                                    color: '#333',
-                                                }}>
-                                                    {item.text}
-                                                </div>
-                                            </div>
-                                        );
-                                    })
+                                            );
+                                        })
+                                    ) : (
+                                        <div style={{ color: '#999', fontSize: '13px' }}>
+                                            {t('configurable_battle.waiting_analysis')}
+                                        </div>
+                                    )
                                 ) : (
                                     <div style={{ color: '#999', fontSize: '13px' }}>
-                                        {t('configurable_battle.waiting_analysis')}
+                                        {t('doudizhu.llm_analysis_hidden')}
                                     </div>
                                 )}
                             </div>
@@ -342,7 +350,7 @@ function PvEDoudizhuDemoView() {
                 <div className="game-controller">
                     <Paper className={'game-controller-paper'} elevation={3}>
                         <Layout.Row style={{ height: '51px' }}>
-                            <Layout.Col span="6" style={{ height: '51px', lineHeight: '48px' }}>
+                            <Layout.Col span="5" style={{ height: '51px', lineHeight: '48px' }}>
                                 <FormGroup style={{ height: '100%' }}>
                                     <FormControlLabel
                                         style={{ textAlign: 'center', height: '100%', display: 'inline-block' }}
@@ -351,6 +359,17 @@ function PvEDoudizhuDemoView() {
                                             <Switch checked={!game.hidePredictionArea} onChange={game.toggleHidePredictionArea} />
                                         }
                                         label={t('doudizhu.ai_hand_faceup')}
+                                    />
+                                </FormGroup>
+                            </Layout.Col>
+                            <Layout.Col span="5" style={{ height: '51px', lineHeight: '48px' }}>
+                                <FormGroup style={{ height: '100%' }}>
+                                    <FormControlLabel
+                                        style={{ textAlign: 'center', height: '100%', display: 'inline-block' }}
+                                        control={
+                                            <Checkbox checked={showLlmAnalysis} onChange={(e) => setShowLlmAnalysis(e.target.checked)} />
+                                        }
+                                        label={t('doudizhu.show_llm_analysis')}
                                     />
                                 </FormGroup>
                             </Layout.Col>
@@ -363,7 +382,7 @@ function PvEDoudizhuDemoView() {
                             <Layout.Col span="1" style={{ height: '100%', width: '1px' }}>
                                 <Divider orientation="vertical" />
                             </Layout.Col>
-                            <Layout.Col span="12">
+                            <Layout.Col span="9">
                                 <div>
                                     <label className={'form-label-left'} style={{ width: '155px', lineHeight: '28px', fontSize: '15px' }}>
                                         {t('doudizhu.ai_thinking_time')}

@@ -86,6 +86,8 @@
 
     "doudizhu": {
         "ai_hand_faceup": "显示AI手牌",
+        "show_llm_analysis": "显示LLM思考过程",
+        "llm_analysis_hidden": "思考过程已隐藏",
         "play_as_landlord": "扮演地主",
         "play_as_peasant": "扮演农民",
         "landlord_up": "地主上家",
